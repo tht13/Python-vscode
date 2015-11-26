@@ -1,0 +1,26 @@
+{
+	"name": "python",
+	"displayName": "Python",
+	"description": "Python language extension for vscode",
+	"version": "0.0.1",
+	"publisher": "tht13",
+	"engines": {
+		"vscode": "^0.10.1"
+	},
+	"categories": [
+		"Languages"
+	],
+	"contributes": {
+		"languages": [{
+			"id": "python",
+			"aliases": ["Python", "python"],
+			"extensions": [".py",".rpy",".pyw",".cpy",".SConstruct",".Sconstruct",".sconstruct",".SConscript",".gyp",".gypi"],
+			"configuration": "./python.configuration.json"
+		}],
+		"grammars": [{
+			"language": "python",
+			"scopeName": "source.python",
+			"path": "./syntaxes/python.tmLanguage"
+		}]
+	}
+}
