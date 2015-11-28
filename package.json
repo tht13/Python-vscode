@@ -21,6 +21,12 @@
 			"language": "python",
 			"scopeName": "source.python",
 			"path": "./syntaxes/python.tmLanguage"
-		}]
+		}],
+        "snippets": [
+            {
+                "language": "python",
+                "path": "./snippets/python.json"
+            }
+        ]
 	}
 }
