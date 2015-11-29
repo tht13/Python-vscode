@@ -12,19 +12,19 @@
 	],
 	"contributes": {
 		"languages": [{
-			"id": "python",
-			"aliases": ["Python", "python"],
+			"id": "python2",
+			"aliases": ["PythonNew"],
 			"extensions": [".py",".rpy",".pyw",".cpy",".SConstruct",".Sconstruct",".sconstruct",".SConscript",".gyp",".gypi"],
 			"configuration": "./python.configuration.json"
 		}],
 		"grammars": [{
-			"language": "python",
+			"language": "python2",
 			"scopeName": "source.python",
 			"path": "./syntaxes/python.tmLanguage"
 		}],
         "snippets": [
             {
-                "language": "python",
+                "language": "python2",
                 "path": "./snippets/python.json"
             }
         ]

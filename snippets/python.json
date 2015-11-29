@@ -1,3 +1,21 @@
 {
-    
+    ".source.python": {
+        "class": {
+			"prefix": "class",
+			"body": ["class ${1:ClassName}(${2:object}):",
+                "    def __init__(self${4:, *args}):",
+		        "        super($1, self).__init__(*args)",
+                "        $0"]
+        },
+        "function": {
+            "prefix": "def",
+            "body": ["def ${1:FunctionName}({$2:args}):",
+                "    $0"]
+        },
+        "method": {
+            "prefix": "method",
+            "body": ["def ${1:FunctionName}(self$2{:, args}):",
+                "    $0"]
+        }
+    }
 }
