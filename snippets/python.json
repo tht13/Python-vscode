@@ -2,20 +2,87 @@
     ".source.python": {
         "class": {
 			"prefix": "class",
-			"body": ["class ${1:ClassName}(${2:object}):",
+			"body": [
+                "class ${1:ClassName}(${2:object}):",
                 "    def __init__(self, ${4:*args}):",
 		        "        super($1, self).__init__($4))",
-                "        $0"]
+                "        $0"
+            ]
         },
         "function": {
             "prefix": "def",
-            "body": ["def ${1:FunctionName}(${2:args}):",
-                "    $0"]
+            "body": [
+                "def ${1:FunctionName}(${2:args}):",
+                "    $0"
+            ]
         },
         "method": {
             "prefix": "method",
-            "body": ["def ${1:FunctionName}(self${2:, args}):",
-                "    $0"]
+            "body": [
+                "def ${1:FunctionName}(self${2:, args}):",
+                "    $0"
+            ]
+        },
+        "import": {
+            "prefix": "import",
+            "body": "import ${1:module}"
+        },
+        "import from": {
+            "prefix": "from",
+            "body": "from ${1:module} import ${2:member}"
+        },
+        "magic": {
+            "prefix": "magic",
+            "body": "__${1:init}__"
+        },
+        "main": {
+            "prefix": "main",
+            "body": [
+                "if __name__ == '__main__':",
+                "    ${1:main()}",
+                "    $0"
+            ]
+        },
+        "self": {
+            "prefix": "self",
+            "body": "self."
+        },
+        "try": {
+            "prefix": "try",
+            "body": [
+                "try:",
+                "    ${1:print(0)}",
+                "except ${1:Exception}:",
+                "    ${2:pass}"
+            ]
+        },
+        "if": {
+            "prefix": "if",
+            "body": [
+                "if ${1:condition}:",
+                "    $0"
+            ]
+        },
+        "elif": {
+            "prefix": "elif",
+            "body": [
+                "elif ${1:condition}:",
+                "    $0"
+            ]
+        },
+        "else": {
+            "prefix": "else",
+            "body": [
+                "else:",
+                "    $0"
+            ]
+        },
+        "for": {
+            "prefix": "for",
+            "body": [
+                "for ${1:item} in ${2:range}:",
+                "    $0"
+            ]
         }
     }
 }
