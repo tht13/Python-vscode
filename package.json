@@ -1,35 +1,63 @@
 {
-	"name": "python",
-	"displayName": "Python",
-	"description": "Python language extension for vscode",
-	"version": "0.0.1",
-	"publisher": "tht13",
-	"engines": {
-		"vscode": "0.10.x"
-	},
-	"activationEvents": [
-		"onLanguage:python2"
-	],
-	"categories": [
-		"Languages"
-	],
-	"contributes": {
-		"languages": [{
-			"id": "python2",
-			"aliases": ["PythonNew"],
-			"extensions": [".py",".rpy",".pyw",".cpy",".SConstruct",".Sconstruct",".sconstruct",".SConscript",".gyp",".gypi"],
-			"configuration": "./python.configuration.json"
-		}],
-		"grammars": [{
-			"language": "python2",
-			"scopeName": "source.python",
-			"path": "./syntaxes/python.tmLanguage"
-		}],
+    "name": "python",
+    "displayName": "Python",
+    "description": "Python language extension for vscode",
+    "version": "0.0.1",
+    "publisher": "tht13",
+    "engines": {
+        "vscode": "0.10.x"
+    },
+    // "activationEvents": [
+    //     "onLanguage:python2"
+    // ],
+    "categories": [
+        "Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "python2",
+                "aliases": [
+                    "PythonNew"
+                ],
+                "extensions": [
+                    ".py",
+                    ".rpy",
+                    ".pyw",
+                    ".cpy",
+                    ".SConstruct",
+                    ".Sconstruct",
+                    ".sconstruct",
+                    ".SConscript",
+                    ".gyp",
+                    ".gypi"
+                ],
+                "firstLine": "^#!/.*\\bpython[0-9.-]*\\b",
+                "configuration": "./python.configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "python2",
+                "scopeName": "source.python",
+                "path": "./syntaxes/python.tmLanguage"
+            },
+            {
+                "scopeName": "source.regexp.python",
+                "path": "./syntaxes/Regular Expressions (Python).tmLanguage"
+            }
+        ],
         "snippets": [
             {
                 "language": "python2",
                 "path": "./snippets/python.json"
             }
+        ],
+        "jsonValidation" : [
+			{
+				"fileMatch": "pyconfig.json",
+				"url": "./schemas/pyconfig.schema.json"
+			}
         ]
-	}
+    }
 }

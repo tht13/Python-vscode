@@ -1,0 +1,58 @@
+{
+	"title": "JSON schema for the Python configuration file",
+	"type": "object",
+	"default": {
+		"compilerOptions": {
+			"target": "Python3"
+		}
+	},
+	"properties": {
+		"compilerOptions": {
+			"type": "object",
+			"description": "Instructs the Python language service how to validate .py files",
+			"properties": {
+				"charset": {
+					"description": "The character set of the input files",
+					"type": "string"
+				},
+				"diagnostics": {
+					"description": "Show diagnostic information.",
+					"type": "boolean"
+				},
+				"locale": {
+					"description": "The locale to use to show error messages, e.g. en-us.",
+					"type": "string"
+				},
+				"mapRoot": {
+					"description": "Specifies the location where debugger should locate map files instead of generated locations",
+					"type": "string",
+					"format": "uri"
+				},
+				"target": {
+					"description": "Specify Python target version:  'Python2', or 'Python3' (default).",
+					"enum": [
+						"Python2",
+						"Python3"
+					],
+					"default": "Python3"
+				}
+			}
+		},
+		"files": {
+			"type": "array",
+			"description": "If no 'files' property is present in a pyconfig.json, the language service defaults to including all files the containing directory and subdirectories. When a 'files' property is specified, only those files are included.",
+			"items": {
+				"type": "string",
+				"format": "uri"
+			}
+		},
+		"exclude": {
+			"type": "array",
+			"description": "List files and folders that should not be included. This property is not honored when the 'files' property is present.",
+			"items": {
+				"type": "string",
+				"format": "uri"
+			}
+		}
+	}
+}
