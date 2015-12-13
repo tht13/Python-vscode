@@ -5,8 +5,11 @@
 	"version": "0.0.1",
 	"publisher": "tht13",
 	"engines": {
-		"vscode": "^0.10.1"
+		"vscode": "0.10.x"
 	},
+	"activationEvents": [
+		"onLanguage:python2"
+	],
 	"categories": [
 		"Languages"
 	],
