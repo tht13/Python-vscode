@@ -1,9 +1,16 @@
 {
     "compilerOptions": {
-        "target": "es6",
-        "module": "commonjs"
+        "target": "ES6",
+		"module": "commonjs",
+		"sourceMap": true,
+		"noLib": true,
+		"moduleResolution": "node"
     },
+    "filesGlob": [
+        ".src/**/*.ts"
+    ],
     "files": [
-        "src/pythonMain.ts"
+        "src/pythonMain.ts",
+        "src/server/server.ts"
     ]
 }
