@@ -10,7 +10,7 @@
     "activationEvents": [
         "onLanguage:python"
     ],
-    "main": "out/pythonMain",
+    "main": "out/src/pythonMain",
     "categories": [
         "Languages"
     ],
