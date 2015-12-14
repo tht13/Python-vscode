@@ -7,18 +7,19 @@
     "engines": {
         "vscode": "0.10.x"
     },
-    // "activationEvents": [
-    //     "onLanguage:python2"
-    // ],
+    "activationEvents": [
+        "onLanguage:python"
+    ],
+    "main": "out/pythonMain",
     "categories": [
         "Languages"
     ],
     "contributes": {
         "languages": [
             {
-                "id": "python2",
+                "id": "python",
                 "aliases": [
-                    "PythonNew"
+                    "Python"
                 ],
                 "extensions": [
                     ".py",
@@ -38,7 +39,7 @@
         ],
         "grammars": [
             {
-                "language": "python2",
+                "language": "python",
                 "scopeName": "source.python",
                 "path": "./syntaxes/python.tmLanguage"
             },
@@ -49,15 +50,15 @@
         ],
         "snippets": [
             {
-                "language": "python2",
+                "language": "python",
                 "path": "./snippets/python.json"
             }
         ],
-        "jsonValidation" : [
-			{
-				"fileMatch": "pyconfig.json",
-				"url": "./schemas/pyconfig.schema.json"
-			}
+        "jsonValidation": [
+            {
+                "fileMatch": "pyconfig.json",
+                "url": "/schemas/pyconfig.schema.json"
+            }
         ]
     }
 }
