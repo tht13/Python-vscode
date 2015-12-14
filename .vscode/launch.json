@@ -12,7 +12,7 @@
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outDir": "out",
-			"preLaunchTask": "npm"
+			"preLaunchTask": "tsc"
 		}
 	]
 }

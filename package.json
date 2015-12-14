@@ -7,9 +7,10 @@
     "engines": {
         "vscode": "0.10.x"
     },
-    // "activationEvents": [
-    //     "onLanguage:python"
-    // ],
+    "activationEvents": [
+        "onLanguage:python"
+    ],
+    "main": "out/pythonMain",
     "categories": [
         "Languages"
     ],
@@ -18,7 +19,7 @@
             {
                 "id": "python",
                 "aliases": [
-                    "PythonNew"
+                    "Python"
                 ],
                 "extensions": [
                     ".py",
@@ -53,11 +54,11 @@
                 "path": "./snippets/python.json"
             }
         ],
-        "jsonValidation" : [
-			{
-				"fileMatch": "pyconfig.json",
-				"url": "./schemas/pyconfig.schema.json"
-			}
+        "jsonValidation": [
+            {
+                "fileMatch": "pyconfig.json",
+                "url": "/schemas/pyconfig.schema.json"
+            }
         ]
     }
 }
