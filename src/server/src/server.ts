@@ -48,12 +48,12 @@ documents.onDidChangeContent((change) => {
 
 // The settings interface describe the server relevant settings part
 interface Settings {
-    languageServerExample: ExampleSettings;
+    python: PythonSettings;
 }
 
-// These are the example settings we defined in the client's package.json
+// These are the python settings we defined in the client's package.json
 // file
-interface ExampleSettings {
+interface PythonSettings {
     maxNumberOfProblems: number;
 }
 
@@ -63,8 +63,8 @@ let maxNumberOfProblems: number;
 // as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <Settings>change.settings;
-    // maxNumberOfProblems = settings.languageServerExample.maxNumberOfProblems || 100;
-    maxNumberOfProblems = 100;
+    maxNumberOfProblems = settings.python.maxNumberOfProblems || 100;
+    // maxNumberOfProblems = 100;
     // Revalidate any open text documents
     documents.all().forEach(validateTextDocument);
 });
@@ -129,7 +129,7 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
     }
     return item; 
 });
-
+/*
 connection.onDidOpenTextDocument((params) => {
     // A text document got opened in VSCode.
     // params.uri uniquely identifies the document. For documents store on disk this is a file URI.
@@ -144,7 +144,7 @@ connection.onDidChangeTextDocument((params) => {
     connection.console.log(`${params.uri} changed: ${JSON.stringify(params.contentChanges) }`);
     connection.console.log(`${params.uri} documents: ${JSON.stringify(documents.keys()) }`);
 });
-/*
+
 
 connection.onDidCloseTextDocument((params) => {
 	// A text document got closed in VSCode.

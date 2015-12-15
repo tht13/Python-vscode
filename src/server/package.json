@@ -1,8 +1,8 @@
 {
-	"name": "langauge-server-example",
-	"description": "Example implementation of a language server in node.",
+	"name": "python-langauge-server",
+	"description": "Python implementation of a language server in node.",
 	"version": "0.0.1",
-	"author": "Microsoft Corporation",
+	"author": "Thomas Haakon Townsend",
 	"license": "MIT",
 	"engines": {
 		"node": "*"

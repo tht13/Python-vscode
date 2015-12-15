@@ -1,7 +1,7 @@
 {
-	"name": "language-client-example",
-	"description": "VSCode part of a language server",
-	"author": "Microsoft Corporation",
+	"name": "python-language-client",
+	"description": "VSCode part of a python language server",
+	"author": "Thomas Haakon Townsend",
 	"license": "MIT",
 	"version": "0.0.1",
 	"publisher": "vscode",
@@ -18,9 +18,9 @@
 	"contributes": {
 		"configuration": {
 			"type": "object",
-			"title": "Example configuration",
+			"title": "Python configuration",
 			"properties": {
-				"languageServerExample.maxNumberOfProblems": {
+				"python.maxNumberOfProblems": {
 					"type": "number",
 					"default": 100,
 					"description": "Controls the maximum number of problems produced by the server."
