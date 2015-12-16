@@ -11,6 +11,8 @@ TextDocuments, ITextDocument, Diagnostic, DiagnosticSeverity,
 InitializeParams, InitializeResult, TextDocumentIdentifier,
 CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
+import { exec } from 'child_process';
+import 'process';
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -64,32 +66,78 @@ let maxNumberOfProblems: number;
 connection.onDidChangeConfiguration((change) => {
     let settings = <Settings>change.settings;
     maxNumberOfProblems = settings.python.maxNumberOfProblems || 100;
-    // maxNumberOfProblems = 100;
     // Revalidate any open text documents
     documents.all().forEach(validateTextDocument);
 });
 
 function validateTextDocument(textDocument: ITextDocument): void {
-    let diagnostics: Diagnostic[] = [];
-    let lines = textDocument.getText().split(/\r?\n/g);
-    let problems = 0;
-    for (var i = 0; i < lines.length && problems < maxNumberOfProblems; i++) {
-        let line = lines[i];
-        let index = line.indexOf('typescript');
-        if (index >= 0) {
+    let path = textDocument.uri;
+    if (/^win/.test(process.platform)) {
+        path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
+    } else {
+        path = path.replace('file://', '');
+    }
+    connection.console.log(textDocument.uri);
+    connection.console.log(path);
+    var cmd = 'pylint -r n '+path;
+
+    exec(cmd, function(error, stdout, stderr) {
+        let result = stdout.toString().split('\r\n');
+        
+        // remove lines up to first error message
+        let i = 0;
+        while (!result[i].startsWith('***')) {
+            result.shift();
+            i++;
+        }
+        result.shift();
+        
+        // log error messages
+        let diagnostics: Diagnostic[] = [];
+        let problems = 0;
+        for (let i in result) {
+            if (result[i].length === 0) {
+                continue;
+            }
+            let match = result[i].match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) (\(.*\))/);
+            if (match == null) {
+                continue;
+            }
+            let severity = 0;
+            switch (match[1]) {
+                case 'C':
+                    severity = DiagnosticSeverity.Error;
+                    break;
+                case 'F':
+                    severity = DiagnosticSeverity.Error;
+                    break;
+                case 'W':
+                    severity = DiagnosticSeverity.Warning;
+                    break;
+                case 'C':
+                    severity = DiagnosticSeverity.Hint;
+                    break;
+                case 'R':
+                    severity = DiagnosticSeverity.Hint;
+                    break;
+                default:
+                    severity = DiagnosticSeverity.Error;
+                    break;
+            }
             problems++;
             diagnostics.push({
-                severity: DiagnosticSeverity.Warning,
+                severity: severity,
                 range: {
-                    start: { line: i, character: index },
-                    end: { line: i, character: index + 10 }
+                    start: { line: parseInt(match[2])-1, character: parseInt(match[3]) },
+                    end: { line: parseInt(match[2])-1, character: Number.MAX_VALUE }
                 },
-                message: `${line.substr(index, 10) } should be spelled TypeScript`
+                message: match[4]+' '+match[5]
             });
+            connection.console.log(`${JSON.stringify(match) }`);
         }
-    }
-    // Send the computed diagnostics to VSCode.
-    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+        connection.console.log(`Problems: ${problems}: ${JSON.stringify(diagnostics) }`);
+        connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+    });
 }
 
 connection.onDidChangeWatchedFiles((change) => {
