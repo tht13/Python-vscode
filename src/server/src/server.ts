@@ -146,6 +146,7 @@ function validateTextDocument(textDocument: ITextDocument): void {
             });
             connection.console.log(`${JSON.stringify(match) }`);
         }
+        connection.console.log(`File: ${ path } - Errors Found: ${ diagnostics.length.toString() }`)
         // connection.console.log(`Problems: ${problems}: ${JSON.stringify(diagnostics) }`);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
     });

@@ -18,7 +18,7 @@
     },
 	"scripts": {
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
-		"compile": "node ./node_modules/vscode/bin/compile -p ./ && installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && tsc -p ./src/server"
+		"compile": "installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && node ./node_modules/vscode/bin/compile -p ./"
 	},
 	"devDependencies": {
 		"typescript": "^1.6.2",
@@ -31,7 +31,7 @@
     "activationEvents": [
         "onLanguage:python"
     ],
-    "main": "out/src/pythonMain",
+    "main": "out/client/src/pythonMain",
     "categories": [
         "Languages",
         "Snippets",

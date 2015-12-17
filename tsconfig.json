@@ -9,6 +9,7 @@
     },
 	"exclude": [
 		"node_modules",
-		"src/server"
+		"src/server/node_modules",
+        "src/client/node_modules"
 	]
 }
