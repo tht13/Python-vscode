@@ -1,18 +1,41 @@
 {
     "name": "python",
-    "displayName": "Python",
-    "description": "Python language extension for vscode",
     "version": "0.0.1",
+    "displayName": "Python for VSCode",
+    "title": "Python for VSCode",
+    "description": "Python language extension for vscode",
+	"authors": [
+        "Thomas Haakon Townsend"
+    ],
     "publisher": "tht13",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tht13/Python-vscode"
+    },
+	"license": "MIT",
     "engines": {
         "vscode": "0.10.x"
     },
+	"scripts": {
+		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+		"compile": "installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && node ./node_modules/vscode/bin/compile -p ./"
+	},
+	"devDependencies": {
+		"typescript": "^1.6.2",
+		"vscode": "0.10.x"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^1.1.0",
+		"vscode-languageserver": "^1.1.0"
+	},
     "activationEvents": [
         "onLanguage:python"
     ],
-    "main": "out/src/pythonMain",
+    "main": "out/client/src/pythonMain",
     "categories": [
-        "Languages"
+        "Languages",
+        "Snippets",
+        "Linters"
     ],
     "contributes": {
         "languages": [
@@ -59,13 +82,17 @@
                 "fileMatch": "pyconfig.json",
                 "url": "/schemas/pyconfig.schema.json"
             }
-        ]
-    },
-	"devDependencies": {
-		"typescript": "^1.6.2",
-		"vscode": "0.10.x"
-	},
-	"dependencies": {
-		"vscode-languageclient": "^1.1.0"
-	}
+        ],
+		"configuration": {
+			"type": "object",
+			"title": "Python configuration",
+			"properties": {
+				"python.maxNumberOfProblems": {
+					"type": "number",
+					"default": 100,
+					"description": "Controls the maximum number of problems produced by the server."
+				}
+			}
+		}
+    }
 }
