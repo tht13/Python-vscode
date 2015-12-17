@@ -84,6 +84,11 @@ function validateTextDocument(textDocument: ITextDocument): void {
     var cmd = 'pylint -r n '+path;
 
     exec(cmd, function(error, stdout, stderr) {
+        if (error.toString().length !== 0) {
+            connection.console.log(`[ERROR] File: ${ path } - Error message: ${ error.toString() }`);
+            connection.console.log(`[ERROR] Error output: ${ stderr.toString() }`);
+        }
+        
         let result = stdout.toString().split('\r\n');
         
         // remove lines up to first error message
