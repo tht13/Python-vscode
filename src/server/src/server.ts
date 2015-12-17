@@ -72,6 +72,8 @@ connection.onDidChangeConfiguration((change) => {
 
 function validateTextDocument(textDocument: ITextDocument): void {
     let path = textDocument.uri;
+    // disabled to improve performence, can be enabled if features require
+    // let documentLines = textDocument.getText().split(/\r?\n/g);
     if (/^win/.test(process.platform)) {
         path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
     } else {
@@ -94,12 +96,11 @@ function validateTextDocument(textDocument: ITextDocument): void {
         
         // log error messages
         let diagnostics: Diagnostic[] = [];
-        let problems = 0;
         for (let i in result) {
             if (result[i].length === 0) {
                 continue;
             }
-            let match = result[i].match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) (\(.*\))/);
+            let match = result[i].match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?(:?'.+?').*?) (\(.*\))/);
             if (match == null) {
                 continue;
             }
@@ -124,18 +125,28 @@ function validateTextDocument(textDocument: ITextDocument): void {
                     severity = DiagnosticSeverity.Error;
                     break;
             }
-            problems++;
+            
+            // implement multiLine messages
+            // ie lineStart and lineEnd
+            let line = parseInt(match[2])-1;
+            let colStart = parseInt(match[3]);
+            let colEnd = Number.MAX_VALUE;
+            if (match[5].length !== 0) {
+                // subtract two because match includes the two quotes
+                colEnd = colStart+match[5].length-2;
+            }
+            
             diagnostics.push({
                 severity: severity,
                 range: {
-                    start: { line: parseInt(match[2])-1, character: parseInt(match[3]) },
-                    end: { line: parseInt(match[2])-1, character: Number.MAX_VALUE }
+                    start: { line: line, character: colStart },
+                    end: { line: line, character: colEnd }
                 },
-                message: match[4]+' '+match[5]
+                message: match[4]+' '+match[6]
             });
             connection.console.log(`${JSON.stringify(match) }`);
         }
-        connection.console.log(`Problems: ${problems}: ${JSON.stringify(diagnostics) }`);
+        // connection.console.log(`Problems: ${problems}: ${JSON.stringify(diagnostics) }`);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
     });
 }
