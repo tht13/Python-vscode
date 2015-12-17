@@ -9,4 +9,7 @@ A Python language pack for Visual Studio Code
 * [ ] Tests
 * [ ] Travis
 * [ ] Debugging
-* [ ] Linting
+* [x] Linting
+* [ ] Intelisense
+* [x] Snippets
+* [x] Syntax Highlighting
