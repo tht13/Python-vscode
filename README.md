@@ -10,6 +10,6 @@ A Python language pack for Visual Studio Code
 * [ ] Travis
 * [ ] Debugging
 * [x] Linting
-* [ ] Intelisense
+* [ ] Intellisense
 * [x] Snippets
 * [x] Syntax Highlighting
