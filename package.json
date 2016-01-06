@@ -1,6 +1,6 @@
 {
     "name": "python",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "displayName": "Python for VSCode",
     "title": "Python for VSCode",
     "description": "Python language extension for vscode",
@@ -32,6 +32,7 @@
         "onLanguage:python"
     ],
     "main": "out/client/src/pythonMain",
+    "icon": "./python_icon.png",
     "categories": [
         "Languages",
         "Snippets",
