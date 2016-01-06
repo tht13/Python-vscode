@@ -56,4 +56,6 @@ docs/_build/
 # PyBuilder
 target/
 
-out/*
+out
+node_modules
+*.vsix

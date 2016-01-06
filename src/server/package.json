@@ -1,0 +1,20 @@
+{
+	"name": "python-langauge-server",
+	"description": "Python implementation of a language server in node.",
+	"version": "0.0.1",
+	"author": "Thomas Haakon Townsend",
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"dependencies": {
+		"vscode-languageserver": "^1.1.0"
+	},
+	"devDependencies": {
+		"typescript": "^1.6.2"
+	},
+	"scripts": {
+		"compile": "installServerIntoExtension ../../out ./package.json ./tsconfig.json && tsc -p .",
+		"watch": "installServerIntoExtension ../../out ./package.json ./tsconfig.json && tsc --watch -p ."
+	}
+}
