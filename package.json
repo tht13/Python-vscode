@@ -1,6 +1,6 @@
 {
     "name": "python",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "displayName": "Python for VSCode",
     "title": "Python for VSCode",
     "description": "Python language extension for vscode",
@@ -32,7 +32,13 @@
         "onLanguage:python"
     ],
     "main": "out/client/src/pythonMain",
-    "icon": "./python_icon.png",
+    "icon": "images/python_icon.png",
+    "galleryBanner": {
+        "color": "#2b5b84",
+        "theme": "light"
+    },
+    "bugs": "https://github.com/tht13/Python-vscode/issues",
+    "homepage": "https://github.com/tht13/Python-vscode/blob/master/README.md",
     "categories": [
         "Languages",
         "Snippets",
