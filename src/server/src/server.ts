@@ -33,11 +33,11 @@ connection.onInitialize((params): InitializeResult => {
     return {
         capabilities: {
             // Tell the client that the server works in FULL text document sync mode
-            textDocumentSync: documents.syncKind,
+            textDocumentSync: documents.syncKind
             // Tell the client that the server support code complete
-            completionProvider: {
-                resolveProvider: true
-            }
+            // completionProvider: {
+            //     resolveProvider: true
+            // }
         }
     }
 });
@@ -71,9 +71,9 @@ connection.onDidChangeConfiguration((change) => {
 });
 
 function validateTextDocument(textDocument: ITextDocument): void {
-    let path = textDocument.uri;
+    let path: string = textDocument.uri;
     // disabled to improve performence, can be enabled if features require
-    // let documentLines = textDocument.getText().split(/\r?\n/g);
+    let documentLines: string[] = textDocument.getText().split(/\r?\n/g);
     if (/^win/.test(process.platform)) {
         path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
     } else {
@@ -81,64 +81,81 @@ function validateTextDocument(textDocument: ITextDocument): void {
     }
     connection.console.log(textDocument.uri);
     connection.console.log(path);
-    var cmd = 'pylint -r n '+path;
+    var cmd: string = "pylint -r n "+path;
 
-    exec(cmd, function(error, stdout, stderr) {
+    exec(cmd, function(error: Error, stdout: ArrayBuffer, stderr: ArrayBuffer) {
         if (error.toString().length !== 0) {
-            connection.console.log(`[ERROR] File: ${ path } - Error message: ${ error.toString() }`);
-            connection.console.log(`[ERROR] Error output: ${ stderr.toString() }`);
+            connection.console.warn(`[ERROR] File: ${ path } - Error message: ${ error.toString() }`);
+            connection.console.warn(`[ERROR] Error output: ${ stderr.toString() }`);
         }
         
-        let result = stdout.toString().split('\r\n');
-        
+        let results: string[] = stdout.toString().split(/\r?\n/g);
         // remove lines up to first error message
-        let i = 0;
-        while (!result[i].startsWith('***')) {
-            result.shift();
-            i++;
-        }
-        result.shift();
+        for (let i = 0; !results[i++].startsWith('***'); results.shift());
+        results.shift();
         
         // log error messages
         let diagnostics: Diagnostic[] = [];
-        for (let i in result) {
-            if (result[i].length === 0) {
-                continue;
-            }
-            let match = result[i].match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?(:?'.+?').*?) (\(.*\))/);
+        for (let result of results) {
+            let match: string[] = result.match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) \((.*)\)/);
             if (match == null) {
+                connection.console.warn("unparsed line:");
+                connection.console.warn(result);
                 continue;
             }
             let severity = 0;
             switch (match[1]) {
-                case 'C':
+                case 'E':
+                    // [E]rror for important programming issues (i.e. most probably bug)
                     severity = DiagnosticSeverity.Error;
                     break;
                 case 'F':
+                    // [F]atal for errors which prevented further processing
                     severity = DiagnosticSeverity.Error;
                     break;
                 case 'W':
+                    // [W]arning for stylistic problems, or minor programming issues
                     severity = DiagnosticSeverity.Warning;
                     break;
                 case 'C':
-                    severity = DiagnosticSeverity.Hint;
+                    // [C]onvention for coding standard violation
+                    severity = DiagnosticSeverity.Information;
                     break;
                 case 'R':
-                    severity = DiagnosticSeverity.Hint;
+                    // [R]efactor for a “good practice” metric violation
+                    severity = DiagnosticSeverity.Information;
                     break;
                 default:
                     severity = DiagnosticSeverity.Error;
                     break;
+            }
+            let quote: string = null;
+            // check for variable name or line in message
+            if (match[4].indexOf('"') !== -1) {
+                quote = match[4].match(/\\?"(.*?)\\?"/)[1];
+            } else if (match[4].indexOf("'") !== -1) {
+                quote = match[4].match(/'(.*)'/)[1];
             }
             
             // implement multiLine messages
             // ie lineStart and lineEnd
             let line = parseInt(match[2])-1;
             let colStart = parseInt(match[3]);
-            let colEnd = Number.MAX_VALUE;
-            if (match[5].length !== 0) {
+            let colEnd = documentLines[line].length;
+            let documentLine: string = documentLines[line];
+            if (quote !== null) {
                 // subtract two because match includes the two quotes
-                colEnd = colStart+match[5].length-2;
+                let quoteStart: number = documentLine.indexOf(quote);
+                if (quoteStart === -1) {
+                    connection.console.warn("Colstart could not be identified.")
+                } else {
+                    colStart = quoteStart;
+                    colEnd = colStart+quote.length;
+                }
+            }
+            // make sure colStart does not including leading whitespace
+            if (colStart == 0 && documentLine.substr(0, 1).match(/\s/) !== null) {
+                colStart = documentLine.length - documentLine.replace(/^\s*/g, "").length;
             }
             
             diagnostics.push({
@@ -147,7 +164,7 @@ function validateTextDocument(textDocument: ITextDocument): void {
                     start: { line: line, character: colStart },
                     end: { line: line, character: colEnd }
                 },
-                message: match[4]+' '+match[6]
+                message: match[4]+': '+match[5]
             });
             connection.console.log(`${JSON.stringify(match) }`);
         }
@@ -164,36 +181,36 @@ connection.onDidChangeWatchedFiles((change) => {
 
 
 // This handler provides the initial list of the completion items.
-connection.onCompletion((textDocumentPosition: TextDocumentIdentifier): CompletionItem[] => {
-    // The pass parameter contains the position of the text document in 
-    // which code complete got requested. For the example we ignore this
-    // info and always provide the same completion items.
-    return [
-        {
-            label: 'TypeScript',
-            kind: CompletionItemKind.Text,
-            data: 1
-        },
-        {
-            label: 'JavaScript',
-            kind: CompletionItemKind.Text,
-            data: 2
-        }
-    ]
-});
+// connection.onCompletion((textDocumentPosition: TextDocumentIdentifier): CompletionItem[] => {
+//     // The pass parameter contains the position of the text document in 
+//     // which code complete got requested. For the example we ignore this
+//     // info and always provide the same completion items.
+//     return [
+//         {
+//             label: 'TypeScript',
+//             kind: CompletionItemKind.Text,
+//             data: 1
+//         },
+//         {
+//             label: 'JavaScript',
+//             kind: CompletionItemKind.Text,
+//             data: 2
+//         }
+//     ]
+// });
 
-// This handler resolve additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-    if (item.data === 1) {
-        item.detail = 'TypeScript details',
-        item.documentation = 'TypeScript documentation'
-    } else if (item.data === 2) {
-        item.detail = 'JavaScript details',
-        item.documentation = 'JavaScript documentation'
-    }
-    return item; 
-});
+// // This handler resolve additional information for the item selected in
+// // the completion list.
+// connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
+//     if (item.data === 1) {
+//         item.detail = 'TypeScript details',
+//         item.documentation = 'TypeScript documentation'
+//     } else if (item.data === 2) {
+//         item.detail = 'JavaScript details',
+//         item.documentation = 'JavaScript documentation'
+//     }
+//     return item; 
+// });
 /*
 connection.onDidOpenTextDocument((params) => {
     // A text document got opened in VSCode.
