@@ -81,14 +81,14 @@ function validateTextDocument(textDocument: ITextDocument): void {
     }
     connection.console.log(textDocument.uri);
     connection.console.log(path);
-    var cmd: string = "pylint -r n "+path;
+    var cmd: string = "pylint -r n " + path;
 
     exec(cmd, function(error: Error, stdout: ArrayBuffer, stderr: ArrayBuffer) {
         if (error.toString().length !== 0) {
-            connection.console.warn(`[ERROR] File: ${ path } - Error message: ${ error.toString() }`);
-            connection.console.warn(`[ERROR] Error output: ${ stderr.toString() }`);
+            connection.console.warn(`[ERROR] File: ${path} - Error message: ${error.toString()}`);
+            connection.console.warn(`[ERROR] Error output: ${stderr.toString()}`);
         }
-        
+
         let results: string[] = stdout.toString().split(/\r?\n/g);
         // remove lines up to first error message
         for (let i = 0; !results[i++].startsWith('***'); results.shift());
@@ -139,36 +139,36 @@ function validateTextDocument(textDocument: ITextDocument): void {
             
             // implement multiLine messages
             // ie lineStart and lineEnd
-            let line = parseInt(match[2])-1;
+            let line = parseInt(match[2]) - 1;
             let colStart = parseInt(match[3]);
             let colEnd = documentLines[line].length;
             let documentLine: string = documentLines[line];
             if (quote !== null) {
-                // subtract two because match includes the two quotes
-                let quoteStart: number = documentLine.indexOf(quote);
+                let quoteRe: RegExp = new RegExp("\\W" + quote + "\\W");
+                let quoteStart: number = documentLine.search(quoteRe) + 1;
                 if (quoteStart === -1) {
-                    connection.console.warn("Colstart could not be identified.")
+                    connection.console.warn("Colstart could not be identified.");
                 } else {
                     colStart = quoteStart;
-                    colEnd = colStart+quote.length;
+                    colEnd = colStart + quote.length;
                 }
             }
             // make sure colStart does not including leading whitespace
             if (colStart == 0 && documentLine.substr(0, 1).match(/\s/) !== null) {
                 colStart = documentLine.length - documentLine.replace(/^\s*/g, "").length;
             }
-            
+
             diagnostics.push({
                 severity: severity,
                 range: {
                     start: { line: line, character: colStart },
                     end: { line: line, character: colEnd }
                 },
-                message: match[4]+': '+match[5]
+                message: match[4] + ': ' + match[5]
             });
-            connection.console.log(`${JSON.stringify(match) }`);
+            connection.console.log(`${JSON.stringify(match)}`);
         }
-        connection.console.log(`File: ${ path } - Errors Found: ${ diagnostics.length.toString() }`)
+        connection.console.log(`File: ${path} - Errors Found: ${diagnostics.length.toString()}`)
         // connection.console.log(`Problems: ${problems}: ${JSON.stringify(diagnostics) }`);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
     });
