@@ -144,10 +144,10 @@ function validateTextDocument(textDocument: ITextDocument): void {
             let colEnd = documentLines[line].length;
             let documentLine: string = documentLines[line];
             if (quote !== null) {
-                // subtract two because match includes the two quotes
-                let quoteStart: number = documentLine.indexOf(quote);
+                let quoteRe: RegExp = new RegExp("\\W"+quote+"\\W");
+                let quoteStart: number = documentLine.search(quoteRe)+1;
                 if (quoteStart === -1) {
-                    connection.console.warn("Colstart could not be identified.")
+                    connection.console.warn("Colstart could not be identified.");
                 } else {
                     colStart = quoteStart;
                     colEnd = colStart+quote.length;
