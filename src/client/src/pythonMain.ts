@@ -6,35 +6,61 @@ import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic, 
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
+	
+    let pythonExtension = new PythonExtension(context);
+	
+    pythonExtension.startServer();
+    
+}
 
-    // The server is implemented in node
-    let serverModule = context.asAbsolutePath(path.join('out', 'server', 'src', 'server.js'));
-    // The debug options for the server
-    let debugOptions = { execArgv: ["--nolazy", "--debug=6004"] };
-	
-    // If the extension is launch in debug mode the debug server options are use
-    // Otherwise the run options are used
-    let serverOptions: ServerOptions = {
-        run: { module: serverModule, transport: TransportKind.ipc },
-        debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
+
+class PythonExtension {
+    private _context: ExtensionContext;
+    private _languageClient: LanguageClient;
+    
+    constructor(context: ExtensionContext) {
+        this._context = context;
+        
+        let serverOptions: ServerOptions, 
+            clientOptions: LanguageClientOptions = this.getOptions();
+        
     }
-	
-    // Options to control the language client
-    let clientOptions: LanguageClientOptions = {
-        // Register the server for plain text documents
-        documentSelector: ['python'],
-        synchronize: {
-            // Synchronize the setting section 'languageServerExample' to the server
-            configurationSection: 'python',
-            // Notify the server about file changes to '.clientrc files contain in the workspace
-            fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+    
+    private getOptions() {
+        // The server is implemented in node
+        let serverModule = this._context.asAbsolutePath(path.join('out', 'server', 'src', 'server.js'));
+        // The debug options for the server
+        let debugOptions = { execArgv: ["--nolazy", "--debug=6004"] };
+        
+        // If the extension is launch in debug mode the debug server options are use
+        // Otherwise the run options are used
+        let serverOptions: ServerOptions = {
+            run: { module: serverModule, transport: TransportKind.ipc },
+            debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
         }
+        
+        // Options to control the language client
+        let clientOptions: LanguageClientOptions = {
+            // Register the server for plain text documents
+            documentSelector: ['python'],
+            synchronize: {
+                // Synchronize the setting section 'languageServerExample' to the server
+                configurationSection: 'python',
+                // Notify the server about file changes to '.pylintrc files contain in the workspace
+                fileEvents: workspace.createFileSystemWatcher('**/.pylintrc')
+            }
+        }
+        
+        return (serverOptions, clientOptions);
     }
-	
-    // Create the language client and start the client.
-    let disposable = new LanguageClient('Python Language Server', serverOptions, clientOptions).start();
-	
-    // Push the disposable to the context's subscriptions so that the 
-    // client can be deactivated on extension deactivation
-    context.subscriptions.push(disposable);
+    
+    public startServer() {
+        // Create the language client and start the client.
+        this._languageClient = new LanguageClient('Python Language Server', serverOptions, clientOptions);
+        let disposable = this._languageClient.start();
+
+        // Push the disposable to the context's subscriptions so that the 
+        // client can be deactivated on extension deactivation
+        this._context.subscriptions.push(disposable);
+    }
 }
