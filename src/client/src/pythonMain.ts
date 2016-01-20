@@ -3,9 +3,10 @@
 import * as path from 'path';
 
 import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic, 
-    DiagnosticCollection, Range, Disposable } from 'vscode';
+    DiagnosticCollection, Range, Disposable, TextDocument } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, 
     TransportKind} from 'vscode-languageclient';
+import { Request, RequestParams, RequestResult, RequestError } from './request';
 
 export function activate(context: ExtensionContext) {
 	console.log("activate");
@@ -56,12 +57,28 @@ class PythonExtension {
         return (serverOptions, clientOptions);
     }
     
+    private _onSave(e: TextDocument) {
+        console.log(e);
+        if  (e.languageId !== 'python') {
+            return;
+        }
+        let params: RequestParams = { processId: 0, filePath: e.fileName } ;
+        this._languageClient.sendRequest( Request.type, params );
+    }
+    
+    private _registerEvents(): void {
+        // subscribe to trigger when the file is saved
+        let subscriptions: Disposable[] = [];
+        workspace.onDidSaveTextDocument(this._onSave, this, subscriptions);
+    }
+    
     public startServer(): Disposable {
         let serverOptions: ServerOptions, 
             clientOptions: LanguageClientOptions = this.getOptions();
         
         // Create the language client and start the client.
         this._languageClient = new LanguageClient('Python Language Server', serverOptions, clientOptions);
+        this._registerEvents();
         return this._languageClient.start();
     }
 }
