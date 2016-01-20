@@ -2,15 +2,21 @@
 
 import * as path from 'path';
 
-import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic, DiagnosticCollection, Range } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic, 
+    DiagnosticCollection, Range, Disposable } from 'vscode';
+import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, 
+    TransportKind} from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
-	
+	console.log("activate");
     let pythonExtension = new PythonExtension(context);
 	
-    pythonExtension.startServer();
+    let disposable: Disposable = pythonExtension.startServer();
     
+    
+    // Push the disposable to the context's subscriptions so that the 
+    // client can be deactivated on extension deactivation
+    context.subscriptions.push(disposable);
 }
 
 
@@ -20,10 +26,6 @@ class PythonExtension {
     
     constructor(context: ExtensionContext) {
         this._context = context;
-        
-        let serverOptions: ServerOptions, 
-            clientOptions: LanguageClientOptions = this.getOptions();
-        
     }
     
     private getOptions() {
@@ -54,13 +56,12 @@ class PythonExtension {
         return (serverOptions, clientOptions);
     }
     
-    public startServer() {
+    public startServer(): Disposable {
+        let serverOptions: ServerOptions, 
+            clientOptions: LanguageClientOptions = this.getOptions();
+        
         // Create the language client and start the client.
         this._languageClient = new LanguageClient('Python Language Server', serverOptions, clientOptions);
-        let disposable = this._languageClient.start();
-
-        // Push the disposable to the context's subscriptions so that the 
-        // client can be deactivated on extension deactivation
-        this._context.subscriptions.push(disposable);
+        return this._languageClient.start();
     }
 }
