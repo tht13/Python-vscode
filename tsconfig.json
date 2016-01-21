@@ -8,8 +8,6 @@
 		"outDir": "out"
     },
 	"exclude": [
-		"node_modules",
-		"src/server/node_modules",
-        "src/client/node_modules"
+		"node_modules"
 	]
 }

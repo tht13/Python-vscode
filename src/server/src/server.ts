@@ -1,7 +1,3 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
 'use strict';
 
 import {
@@ -13,6 +9,7 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
+import { Request, RequestResult } from '../../client/src/request'
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -70,15 +67,29 @@ connection.onDidChangeConfiguration((change) => {
     documents.all().forEach(validateTextDocument);
 });
 
-function validateTextDocument(textDocument: ITextDocument): void {
-    let path: string = textDocument.uri;
-    // disabled to improve performence, can be enabled if features require
-    let documentLines: string[] = textDocument.getText().split(/\r?\n/g);
+connection.onRequest(Request.type, (p): RequestResult => {
+    connection.console.log("REQUEST");
+    validateTextDocument(documents.get(p.uri.toString()));
+    return {
+        succesful: true
+    }
+});
+
+function fixPath(path: string): string {
     if (/^win/.test(process.platform)) {
         path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
     } else {
         path = path.replace('file://', '');
     }
+    return path;
+}
+
+function validateTextDocument(textDocument: ITextDocument): void {
+    let path: string = textDocument.uri;
+    // disabled to improve performence, can be enabled if features require
+    let documentLines: string[] = textDocument.getText().split(/\r?\n/g);
+    path = fixPath(path);
+    
     connection.console.log(textDocument.uri);
     connection.console.log(path);
     var cmd: string = "pylint -r n " + path;
