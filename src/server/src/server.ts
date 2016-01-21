@@ -9,7 +9,7 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
-import { Request } from '../../client/src/request'
+import { Request, RequestResult } from '../../client/src/request'
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -67,9 +67,12 @@ connection.onDidChangeConfiguration((change) => {
     documents.all().forEach(validateTextDocument);
 });
 
-connection.onRequest(Request.type, p => {
+connection.onRequest(Request.type, (p): RequestResult => {
     connection.console.log("REQUEST");
-    validateTextDocument(documents.get(p.uri.toString()));  
+    validateTextDocument(documents.get(p.uri.toString()));
+    return {
+        succesful: true
+    }
 });
 
 function fixPath(path: string): string {
