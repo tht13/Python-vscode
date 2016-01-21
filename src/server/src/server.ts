@@ -9,6 +9,7 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
+import { Request } from './request'
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -65,6 +66,10 @@ connection.onDidChangeConfiguration((change) => {
     // Revalidate any open text documents
     documents.all().forEach(validateTextDocument);
 });
+
+// connection.onRequest(Request.type, () => {
+    
+// })
 
 function validateTextDocument(textDocument: ITextDocument): void {
     let path: string = textDocument.uri;
