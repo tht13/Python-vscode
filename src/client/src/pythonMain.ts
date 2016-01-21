@@ -62,7 +62,13 @@ class PythonExtension {
             return;
         }
         let params: RequestParams = { processId: 0, uri: e.uri };
-        this._languageClient.sendRequest(Request.type, params);
+        this._languageClient.sendRequest(Request.type, params).then(r => {
+            if (!r.succesful) {
+                console.error("Lintings failed on save");
+                console.error("File: "+params.uri.toString());
+            }  
+        });
+        
     }
 
     private _registerEvents(): void {
