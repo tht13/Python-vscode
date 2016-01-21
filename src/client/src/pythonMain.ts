@@ -2,16 +2,16 @@
 
 import * as path from 'path';
 
-import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic, 
-    DiagnosticCollection, Range, Disposable, TextDocument } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, 
-    TransportKind} from 'vscode-languageclient';
+import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic,
+DiagnosticCollection, Range, Disposable, TextDocument } from 'vscode';
+import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions,
+TransportKind} from 'vscode-languageclient';
 import { Request, RequestParams, RequestResult, RequestError } from './request';
 
 export function activate(context: ExtensionContext) {
-	console.log("activate");
+    console.log("activate");
     let pythonExtension = new PythonExtension(context);
-	
+
     let disposable: Disposable = pythonExtension.startServer();
     
     
@@ -24,12 +24,12 @@ export function activate(context: ExtensionContext) {
 class PythonExtension {
     private _context: ExtensionContext;
     private _languageClient: LanguageClient;
-    
+
     constructor(context: ExtensionContext) {
         this._context = context;
     }
-    
-    private getOptions() {
+
+    private getOptions(): { serverOptions: ServerOptions, clientOptions: LanguageClientOptions } {
         // The server is implemented in node
         let serverModule = this._context.asAbsolutePath(path.join('out', 'server', 'src', 'server.js'));
         // The debug options for the server
@@ -53,31 +53,30 @@ class PythonExtension {
                 fileEvents: workspace.createFileSystemWatcher('**/.pylintrc')
             }
         }
-        
-        return (serverOptions, clientOptions);
+
+        return { "serverOptions": serverOptions, "clientOptions": clientOptions };
     }
-    
+
     private _onSave(e: TextDocument) {
         console.log(e);
-        if  (e.languageId !== 'python') {
+        if (e.languageId !== 'python') {
             return;
         }
-        let params: RequestParams = { processId: 0, filePath: e.fileName } ;
-        this._languageClient.sendRequest( Request.type, params );
+        let params: RequestParams = { processId: 0, filePath: e.fileName };
+        this._languageClient.sendRequest(Request.type, params);
     }
-    
+
     private _registerEvents(): void {
         // subscribe to trigger when the file is saved
         let subscriptions: Disposable[] = [];
         workspace.onDidSaveTextDocument(this._onSave, this, subscriptions);
     }
-    
+
     public startServer(): Disposable {
-        let serverOptions: ServerOptions, 
-            clientOptions: LanguageClientOptions = this.getOptions();
+        let options = this.getOptions();
         
         // Create the language client and start the client.
-        this._languageClient = new LanguageClient('Python Language Server', serverOptions, clientOptions);
+        this._languageClient = new LanguageClient('Python Language Server', options.serverOptions, options.clientOptions);
         this._registerEvents();
         return this._languageClient.start();
     }
