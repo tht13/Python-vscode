@@ -1,3 +1,4 @@
+import { Uri } from 'vscode';
 import { RequestType } from 'vscode-languageclient';
 export namespace Request {
 	export const type: RequestType<RequestParams, RequestResult, RequestError> = { get method() { return 'request'; } };
@@ -14,10 +15,10 @@ export interface RequestParams {
 	processId: number;
 
 	/**
-	 * The filePath. Is null
+	 * The uri. Is null
 	 * if no folder is open.
 	 */
-	filePath: string;
+	uri: Uri;
 }
 
 /**

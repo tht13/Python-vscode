@@ -58,11 +58,10 @@ class PythonExtension {
     }
 
     private _onSave(e: TextDocument) {
-        console.log(e);
         if (e.languageId !== 'python') {
             return;
         }
-        let params: RequestParams = { processId: 0, filePath: e.fileName };
+        let params: RequestParams = { processId: 0, uri: e.uri };
         this._languageClient.sendRequest(Request.type, params);
     }
 

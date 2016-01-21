@@ -9,7 +9,7 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
-import { Request } from './request'
+import { Request } from '../../client/src/request'
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -67,19 +67,26 @@ connection.onDidChangeConfiguration((change) => {
     documents.all().forEach(validateTextDocument);
 });
 
-// connection.onRequest(Request.type, () => {
-    
-// })
+connection.onRequest(Request.type, p => {
+    connection.console.log("REQUEST");
+    validateTextDocument(documents.get(p.uri.toString()));  
+});
 
-function validateTextDocument(textDocument: ITextDocument): void {
-    let path: string = textDocument.uri;
-    // disabled to improve performence, can be enabled if features require
-    let documentLines: string[] = textDocument.getText().split(/\r?\n/g);
+function fixPath(path: string): string {
     if (/^win/.test(process.platform)) {
         path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
     } else {
         path = path.replace('file://', '');
     }
+    return path;
+}
+
+function validateTextDocument(textDocument: ITextDocument): void {
+    let path: string = textDocument.uri;
+    // disabled to improve performence, can be enabled if features require
+    let documentLines: string[] = textDocument.getText().split(/\r?\n/g);
+    path = fixPath(path);
+    
     connection.console.log(textDocument.uri);
     connection.console.log(path);
     var cmd: string = "pylint -r n " + path;
