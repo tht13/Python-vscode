@@ -3,6 +3,8 @@ import { RemoteConsole, Diagnostic,
     ITextDocument } from 'vscode-languageserver';
 import { fixPath, validatePath } from './../utils';
 
+//TODO: Handle false return from validatePath better
+
 export class BaseLinter {
     protected _target: string;
     protected _args: string[];
@@ -24,9 +26,12 @@ export class BaseLinter {
      * @returns string
      */
     getCmd(): string {
-        if (this.validateFilepath(this._filepath)) {
+        if (validatePath(this._filepath)) {
             let cmd: string[] = [this._target, ...this._args, this._filepath];
             return cmd.join(" ");
+        } else {
+            this.error(`Error generating command`)
+            this.error(`File does not exist: ${this._filepath}`);
         }
     }
 
@@ -50,6 +55,9 @@ export class BaseLinter {
     setTarget(target: string) {
         if (validatePath(target)) {
             this._target = target;
+        } else {
+            this.error(`Error setting target`)
+            this.error(`Target does not exist: ${target}`);
         }
     }
     
@@ -71,21 +79,18 @@ export class BaseLinter {
 
     setDocument(doc: ITextDocument) {
         let path = fixPath(doc.uri);
-        if (this.validateFilepath(path)) this._filepath = path;
-        this._documentText = doc.getText().split(/\r?\n/g);
-        this.log(`Loaded document: ${this._filepath}`);
+        if (validatePath(path)) {
+            this._filepath = path;
+            this._documentText = doc.getText().split(/\r?\n/g);
+            this.log(`Loaded document: ${this._filepath}`);
+        } else {
+            this.error(`Error loading document`)
+            this.error(`File does not exist: ${path}`);
+        }
     }
 
     getFilepath(): string {
         return this._filepath;
-    }
-    
-    //TODO: handle thrown ReferenceError in function references 
-    private validateFilepath(path): boolean {
-        if (!validatePath(path)) {
-            throw new ReferenceError();
-        }
-        return true;
     }
 
     fixResults(results: string[]): string[] {
