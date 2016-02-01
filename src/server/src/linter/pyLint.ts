@@ -7,7 +7,7 @@ export class PyLinter extends BaseLinter {
         let target = "pylint";
         let pylintArgs = ["-r", "n"];
         super(target, args.concat(pylintArgs));
-        this.setRegex(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) \((.*)\)/);
+        this.setRegex("(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) \((.*)\)");
         this.buildSeverityMap();
     }
 

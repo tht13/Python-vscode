@@ -33,10 +33,21 @@ export class BaseLinter {
     getRegex(): RegExp {
         return this._regexMatch;
     }
-
-    setRegex(regExp: RegExp) {
-        //TODO: should perform a test for valid regex
-        this._regexMatch = regExp;
+    
+    /**
+     * Set the RegExp to use to parse lint results
+     * @throws {EvalError} Thrown when the input pattern is invalid
+     * @param  {string} pattern The regular expression patter
+     * @param  {string=""} flags A string of character flags (igm) to use in the RegExp, Defaults to none
+     */
+    setRegex(pattern: string, flags: string = "") {
+        try {
+            let regExp = new RegExp(pattern, flags);
+            this._regexMatch = regExp;
+        } catch (e) {
+            this.warn(e.toString());
+            throw new EvalError();
+        }
     }
 
     setDocument(doc: ITextDocument) {
