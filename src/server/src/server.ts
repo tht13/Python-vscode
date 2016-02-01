@@ -9,7 +9,7 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
-import { Request, RequestResult } from '../../client/src/request'
+import { Request, RequestResult } from '../../client/src/request';
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -39,12 +39,6 @@ connection.onInitialize((params): InitializeResult => {
     }
 });
 
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
-    validateTextDocument(change.document);
-});
-
 // The settings interface describe the server relevant settings part
 interface Settings {
     python: PythonSettings;
@@ -67,12 +61,26 @@ connection.onDidChangeConfiguration((change) => {
     documents.all().forEach(validateTextDocument);
 });
 
-connection.onRequest(Request.type, (p): RequestResult => {
+/**
+ * Handles requests from the client
+ * Returns the status of the handle attempt
+ */
+connection.onRequest(Request.type, (params): RequestResult => {
     connection.console.log("REQUEST");
-    validateTextDocument(documents.get(p.uri.toString()));
-    return {
+    connection.console.log("REQUEST EVENT TYPE: " + params.requestEventType);
+    let result: RequestResult;
+    try {
+        validateTextDocument(documents.get(params.uri.toString()));
+        result = {
         succesful: true
+        };
+    } catch (exception) {
+        result = {
+            succesful: false,
+            message: exception.toString()
+        };
     }
+    return result;
 });
 
 function fixPath(path: string): string {
@@ -188,6 +196,7 @@ function validateTextDocument(textDocument: ITextDocument): void {
 connection.onDidChangeWatchedFiles((change) => {
     // Monitored files have change in VSCode
     connection.console.log('We recevied an file change event');
+    documents.all().forEach(validateTextDocument);
 });
 
 

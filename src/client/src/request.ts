@@ -19,6 +19,11 @@ export interface RequestParams {
 	 * if no folder is open.
 	 */
 	uri: Uri;
+    
+    /**
+     * The type of request event to handle.
+     */
+    requestEventType: RequestEventType;
 }
 
 /**
@@ -26,6 +31,8 @@ export interface RequestParams {
  */
 export interface RequestResult {
     succesful: boolean;
+    
+    message?:string;
 }
 
 
@@ -39,4 +46,10 @@ export interface RequestError {
 	 * in the {@link ResponseError}
 	 */
 	retry: boolean;
+}
+
+export enum RequestEventType {
+    SAVE,
+    OPEN,
+    CONFIG
 }

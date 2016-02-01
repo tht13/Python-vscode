@@ -3,10 +3,10 @@
 import * as path from 'path';
 
 import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic,
-DiagnosticCollection, Range, Disposable, TextDocument } from 'vscode';
+DiagnosticCollection, Range, Disposable, TextDocument, window } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions,
-TransportKind} from 'vscode-languageclient';
-import { Request, RequestParams, RequestResult, RequestError } from './request';
+TransportKind } from 'vscode-languageclient';
+import { Request, RequestParams, RequestResult, RequestError, RequestEventType } from './request';
 
 export function activate(context: ExtensionContext) {
     console.log("activate");
@@ -20,7 +20,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(disposable);
 }
 
-
+// TODO perform autosave setting check, notify user if disabled
 class PythonExtension {
     private _context: ExtensionContext;
     private _languageClient: LanguageClient;
@@ -29,7 +29,7 @@ class PythonExtension {
         this._context = context;
     }
 
-    private getOptions(): { serverOptions: ServerOptions, clientOptions: LanguageClientOptions } {
+    private _getOptions(): { serverOptions: ServerOptions, clientOptions: LanguageClientOptions } {
         // The server is implemented in node
         let serverModule = this._context.asAbsolutePath(path.join('out', 'server', 'src', 'server.js'));
         // The debug options for the server
@@ -44,7 +44,7 @@ class PythonExtension {
         
         // Options to control the language client
         let clientOptions: LanguageClientOptions = {
-            // Register the server for plain text documents
+            // Register the server for python documents
             documentSelector: ['python'],
             synchronize: {
                 // Synchronize the setting section 'languageServerExample' to the server
@@ -57,32 +57,56 @@ class PythonExtension {
         return { "serverOptions": serverOptions, "clientOptions": clientOptions };
     }
 
-    private _onSave(e: TextDocument) {
-        if (e.languageId !== 'python') {
+    private _onSave(doc: TextDocument): void {
+        if (doc.languageId !== 'python') {
             return;
         }
-        let params: RequestParams = { processId: 0, uri: e.uri };
-        this._languageClient.sendRequest(Request.type, params).then(r => {
-            if (!r.succesful) {
+        let params: RequestParams = { processId: process.pid, uri: doc.uri, requestEventType: RequestEventType.SAVE };
+        let cb = (result: RequestResult) => {
+            if (!result.succesful) {
                 console.error("Lintings failed on save");
-                console.error("File: "+params.uri.toString());
-            }  
-        });
-        
+                console.error(`File: ${params.uri.toString()}`);
+                console.error(`Message: ${result.message}`);
+            }
+        }
+        this._doRequest(params, cb);
+    }
+    
+    // TODO need to add check if isDirty, save if it is, check that autosave is enabled
+    private _onOpen(doc: TextDocument): void {
+        if (doc.languageId !== 'python') {
+            return;
+        }
+        let params: RequestParams = { processId: process.pid, uri: doc.uri, requestEventType: RequestEventType.OPEN };
+        let cb = (result: RequestResult) => {
+            if (!result.succesful) {
+                console.error("Lintings failed on open");
+                console.error(`File: ${params.uri.toString()}`);
+                console.error(`Message: ${result.message}`);
+            }
+        }
+        this._doRequest(params, cb);
+    }
+
+    private _doRequest(params: RequestParams, cb: (RequestResult) => void): void {
+        this._languageClient.sendRequest(Request.type, params).then(cb);
     }
 
     private _registerEvents(): void {
-        // subscribe to trigger when the file is saved
+        // subscribe to trigger when the file is saved or opened
         let subscriptions: Disposable[] = [];
         workspace.onDidSaveTextDocument(this._onSave, this, subscriptions);
+        workspace.onDidOpenTextDocument(this._onOpen, this, subscriptions);
     }
 
     public startServer(): Disposable {
-        let options = this.getOptions();
+        let options = this._getOptions();
         
         // Create the language client and start the client.
         this._languageClient = new LanguageClient('Python Language Server', options.serverOptions, options.clientOptions);
         this._registerEvents();
-        return this._languageClient.start();
+        let start = this._languageClient.start();
+        this._onOpen(window.activeTextEditor.document);
+        return start;
     }
 }
