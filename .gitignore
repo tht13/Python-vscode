@@ -60,3 +60,4 @@ out
 node_modules
 *.vsix
 .vscode/GitHubIssue
+.vscode-test
