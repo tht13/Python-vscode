@@ -10,6 +10,9 @@ CompletionItem, CompletionItemKind
 import { exec } from 'child_process';
 import 'process';
 import { Request, RequestResult } from '../../client/src/request';
+import { PyLinter } from './linter/pyLint';
+import { BaseLinter } from './linter/baseLinter';
+import { fixPath } from './utils';
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -21,6 +24,10 @@ let documents: TextDocuments = new TextDocuments();
 // Make the text document manager listen on the connection
 // for open, change and close text document events
 documents.listen(connection);
+
+// Linter
+let linter: BaseLinter = new PyLinter();
+linter.enableConsole(connection.console);
 
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites. 
@@ -72,7 +79,7 @@ connection.onRequest(Request.type, (params): RequestResult => {
     try {
         validateTextDocument(documents.get(params.uri.toString()));
         result = {
-        succesful: true
+            succesful: true
         };
     } catch (exception) {
         result = {
@@ -83,112 +90,32 @@ connection.onRequest(Request.type, (params): RequestResult => {
     return result;
 });
 
-function fixPath(path: string): string {
-    if (/^win/.test(process.platform)) {
-        path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
-    } else {
-        path = path.replace('file://', '');
-    }
-    return path;
-}
 
+
+/**
+ * Takes a text document and runs PyLint on it, sends Diagnostics back to client
+ * @param  {ITextDocument} textDocument
+ */
 function validateTextDocument(textDocument: ITextDocument): void {
-    let path: string = textDocument.uri;
-    // disabled to improve performence, can be enabled if features require
-    let documentLines: string[] = textDocument.getText().split(/\r?\n/g);
-    path = fixPath(path);
-    
-    connection.console.log(textDocument.uri);
-    connection.console.log(path);
-    var cmd: string = "pylint -r n " + path;
+    linter.setDocument(textDocument);
+    let cmd: string = linter.getCmd();
 
     exec(cmd, function(error: Error, stdout: ArrayBuffer, stderr: ArrayBuffer) {
         if (error.toString().length !== 0) {
-            connection.console.warn(`[ERROR] File: ${path} - Error message: ${error.toString()}`);
+            connection.console.warn(`[ERROR] File: ${linter.getFilepath()} - Error message: ${error.toString()}`);
             connection.console.warn(`[ERROR] Error output: ${stderr.toString()}`);
         }
 
         let results: string[] = stdout.toString().split(/\r?\n/g);
-        // remove lines up to first error message
-        for (let i = 0; !results[i++].startsWith('***'); results.shift());
-        results.shift();
+        results = linter.fixResults(results);
         
         // log error messages
         let diagnostics: Diagnostic[] = [];
         for (let result of results) {
-            let match: string[] = result.match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) \((.*)\)/);
-            if (match == null) {
-                connection.console.warn("unparsed line:");
-                connection.console.warn(result);
-                continue;
-            }
-            let severity = 0;
-            switch (match[1]) {
-                case 'E':
-                    // [E]rror for important programming issues (i.e. most probably bug)
-                    severity = DiagnosticSeverity.Error;
-                    break;
-                case 'F':
-                    // [F]atal for errors which prevented further processing
-                    severity = DiagnosticSeverity.Error;
-                    break;
-                case 'W':
-                    // [W]arning for stylistic problems, or minor programming issues
-                    severity = DiagnosticSeverity.Warning;
-                    break;
-                case 'C':
-                    // [C]onvention for coding standard violation
-                    severity = DiagnosticSeverity.Information;
-                    break;
-                case 'R':
-                    // [R]efactor for a “good practice” metric violation
-                    severity = DiagnosticSeverity.Information;
-                    break;
-                default:
-                    severity = DiagnosticSeverity.Error;
-                    break;
-            }
-            let quote: string = null;
-            // check for variable name or line in message
-            if (match[4].indexOf('"') !== -1) {
-                quote = match[4].match(/\\?"(.*?)\\?"/)[1];
-            } else if (match[4].indexOf("'") !== -1) {
-                quote = match[4].match(/'(.*)'/)[1];
-            }
-            
-            // implement multiLine messages
-            // ie lineStart and lineEnd
-            let line = parseInt(match[2]) - 1;
-            let colStart = parseInt(match[3]);
-            let colEnd = documentLines[line].length;
-            let documentLine: string = documentLines[line];
-            if (quote !== null) {
-                let quoteRe: RegExp = new RegExp("\\W" + quote + "\\W");
-                let quoteStart: number = documentLine.search(quoteRe) + 1;
-                if (quoteStart === -1) {
-                    connection.console.warn("Colstart could not be identified.");
-                } else {
-                    colStart = quoteStart;
-                    colEnd = colStart + quote.length;
-                }
-            }
-            // make sure colStart does not including leading whitespace
-            if (colStart == 0 && documentLine.substr(0, 1).match(/\s/) !== null) {
-                colStart = documentLine.length - documentLine.replace(/^\s*/g, "").length;
-            }
-
-            diagnostics.push({
-                severity: severity,
-                range: {
-                    start: { line: line, character: colStart },
-                    end: { line: line, character: colEnd }
-                },
-                message: match[4] + ': ' + match[5]
-            });
-            connection.console.log(`${JSON.stringify(match)}`);
+            let diagnostic = linter.parseLintResult(result);
+            diagnostics.push(diagnostic);
         }
-        connection.console.log(`File: ${path} - Errors Found: ${diagnostics.length.toString()}`)
-        // connection.console.log(`Problems: ${problems}: ${JSON.stringify(diagnostics) }`);
+        connection.console.log(`File: ${linter.getFilepath()} - Errors Found: ${diagnostics.length.toString()}`);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
     });
 }
