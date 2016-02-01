@@ -1,5 +1,5 @@
 import 'process';
-import 'fs';
+import fs = require('fs');
 
 /**
  * Takes a uri path and fixes it to be a file path
