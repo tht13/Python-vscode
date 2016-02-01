@@ -10,7 +10,8 @@ import { Request, RequestParams, RequestResult, RequestError, RequestEventType }
 
 export function activate(context: ExtensionContext) {
     console.log("activate");
-    let pythonExtension = new PythonExtension(context);
+    let pythonExtension = new PythonExtension();
+    pythonExtension.setExtenstionRoot(context.extensionPath)
 
     let disposable: Disposable = pythonExtension.startServer();
     
@@ -21,17 +22,22 @@ export function activate(context: ExtensionContext) {
 }
 
 //TODO: perform autosave setting check, notify user if disabled
-class PythonExtension {
+export class PythonExtension {
     private _context: ExtensionContext;
     private _languageClient: LanguageClient;
-
-    constructor(context: ExtensionContext) {
+    private _rootExtenstion: string;
+    
+    setContext(context: ExtensionContext) {
         this._context = context;
+    }
+    
+    setExtenstionRoot(path: string) {
+        this._rootExtenstion = path;
     }
 
     private _getOptions(): { serverOptions: ServerOptions, clientOptions: LanguageClientOptions } {
         // The server is implemented in node
-        let serverModule = this._context.asAbsolutePath(path.join('out', 'server', 'src', 'server.js'));
+        let serverModule = path.resolve(this._rootExtenstion, path.join('out', 'server', 'src', 'server.js'));
         // The debug options for the server
         let debugOptions = { execArgv: ["--nolazy", "--debug=6004"] };
         
@@ -87,6 +93,10 @@ class PythonExtension {
         }
         this._doRequest(params, cb);
     }
+    
+    public testDoc(doc: TextDocument) {
+        this._onOpen(doc);
+    }
 
     private _doRequest(params: RequestParams, cb: (RequestResult) => void): void {
         this._languageClient.sendRequest(Request.type, params).then(cb);
@@ -106,7 +116,9 @@ class PythonExtension {
         this._languageClient = new LanguageClient('Python Language Server', options.serverOptions, options.clientOptions);
         this._registerEvents();
         let start = this._languageClient.start();
-        this._onOpen(window.activeTextEditor.document);
+        if (window.visibleTextEditors.length > 0) {
+            this._onOpen(window.activeTextEditor.document);
+        }
         return start;
     }
 }

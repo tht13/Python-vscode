@@ -18,7 +18,8 @@
     },
 	"scripts": {
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
-		"compile": "installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && node ./node_modules/vscode/bin/compile -p ./"
+		"compile": "installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && node ./node_modules/vscode/bin/compile -p ./",
+        "test": "node ./node_modules/vscode/bin/test"
 	},
 	"devDependencies": {
 		"typescript": "^1.6.2",
