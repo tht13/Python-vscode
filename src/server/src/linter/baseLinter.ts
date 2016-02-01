@@ -1,7 +1,7 @@
 import { RemoteConsole, Diagnostic, 
     DiagnosticSeverity, Range, 
     ITextDocument } from 'vscode-languageserver';
-import { fixPath } from './../utils';
+import { fixPath, validatePath } from './../utils';
 
 export class BaseLinter {
     protected _target: string;
@@ -50,9 +50,9 @@ export class BaseLinter {
         return this._filepath;
     }
     
-    //TODO: validate path is actual file
+    //TODO: handle thrown ReferenceError in function references 
     private validateFilepath(path): boolean {
-        if (path === "" || path === null || path === undefined) {
+        if (!validatePath(path)) {
             throw new ReferenceError();
         }
         return true;

@@ -1,4 +1,5 @@
 import 'process';
+import 'fs';
 
 /**
  * Takes a uri path and fixes it to be a file path
@@ -14,4 +15,21 @@ export function fixPath(path: string): string {
         path = path.replace('file://', '');
     }
     return path;
+}
+
+/**
+ * Validates that the provided path is a actual file
+ * @param  {string} path The path to validate
+ * @returns boolean
+ */
+export function validatePath(path: string): boolean {
+    try {
+        if (path === "" || path === null || path === undefined) {
+            return false;
+        }
+        fs.accessSync(path, fs.F_OK);
+        return true;
+    } catch(e) {
+        return false;
+    }
 }
