@@ -1,7 +1,6 @@
 import { RemoteConsole, Diagnostic, DiagnosticSeverity, Range } from 'vscode-languageserver';
 import { BaseLinter } from './baseLinter';
 
-//TODO: expose target to specify path to pylint
 export class PyLinter extends BaseLinter {
     constructor(args: string[] = []) {
         let target = "pylint";

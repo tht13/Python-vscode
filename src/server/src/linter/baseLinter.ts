@@ -8,7 +8,7 @@ export class BaseLinter {
     protected _args: string[];
     protected _filepath: string;
     protected _documentText: string[];
-    protected _regexMatch: RegExp;
+    protected _regExp: RegExp;
     protected _severityMap: Map<string, DiagnosticSeverity>;
     private _consoleEnabled: boolean = false;
     private _console: RemoteConsole;
@@ -31,7 +31,26 @@ export class BaseLinter {
     }
 
     getRegex(): RegExp {
-        return this._regexMatch;
+        return this._regExp;
+    }
+    
+    /**
+     * Get the target linter to execute
+     * @returns string
+     */
+    getTarget(): string {
+        return this._target;
+    }
+    
+    /**
+     * Set the command line target for the linter
+     * Used when a linter is in a custom location
+     * @param  {string} target The target of the linter
+     */
+    setTarget(target: string) {
+        if (validatePath(target)) {
+            this._target = target;
+        }
     }
     
     /**
@@ -43,7 +62,7 @@ export class BaseLinter {
     setRegex(pattern: string, flags: string = "") {
         try {
             let regExp = new RegExp(pattern, flags);
-            this._regexMatch = regExp;
+            this._regExp = regExp;
         } catch (e) {
             this.warn(e.toString());
             throw new EvalError();
