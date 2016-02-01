@@ -22,6 +22,7 @@ Linting can be customised with a `.pylintrc` file in the root of the current wor
 * [ ] Debugging
 * [x] Linting
   * [x] Lint on save of file
+  * [x] Modularised to allow choice of linters
 * [ ] Intellisense
 * [ ] Formatting
 * [x] Snippets
