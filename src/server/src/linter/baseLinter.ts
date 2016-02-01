@@ -18,7 +18,11 @@ export class BaseLinter {
         this._args = args;
         this.buildSeverityMap();
     };
-
+    
+    /**
+     * Get the command line string to run for the file
+     * @returns string
+     */
     getCmd(): string {
         if (this.validateFilepath(this._filepath)) {
             let cmd: string[] = [this._target, ...this._args, this._filepath];
@@ -31,7 +35,7 @@ export class BaseLinter {
     }
 
     setRegex(regExp: RegExp) {
-        // TODO should perform a test for valid regex
+        //TODO: should perform a test for valid regex
         this._regexMatch = regExp;
     }
 
@@ -46,7 +50,7 @@ export class BaseLinter {
         return this._filepath;
     }
     
-    // TODO validate path is actual file
+    //TODO: validate path is actual file
     private validateFilepath(path): boolean {
         if (path === "" || path === null || path === undefined) {
             throw new ReferenceError();
@@ -57,7 +61,12 @@ export class BaseLinter {
     fixResults(results: string[]): string[] {
         return results;
     }
-
+    
+    /**
+     * Parses a linting result and returns the Diagnostic result
+     * @param  {string} line The line from command line to parse
+     * @returns Diagnostic
+     */
     parseLintResult(line: string): Diagnostic {
         let dummyDiagnostic: Diagnostic = {
             message: "Dummy diagnostic",
@@ -65,7 +74,15 @@ export class BaseLinter {
         };
         return dummyDiagnostic;
     }
-
+    
+    /**
+     * Creates a Range from the input line and character positions
+     * @param  {number} startLine The starting line
+     * @param  {number} startChar The starting character
+     * @param  {number} endLine The ending line
+     * @param  {number} endChar The ending character
+     * @returns Range
+     */
     protected createRange(startLine: number, startChar: number, endLine: number, endChar: number): Range {
         return {
             start: {

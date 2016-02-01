@@ -20,7 +20,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(disposable);
 }
 
-// TODO perform autosave setting check, notify user if disabled
+//TODO: perform autosave setting check, notify user if disabled
 class PythonExtension {
     private _context: ExtensionContext;
     private _languageClient: LanguageClient;
@@ -72,7 +72,7 @@ class PythonExtension {
         this._doRequest(params, cb);
     }
     
-    // TODO need to add check if isDirty, save if it is, check that autosave is enabled
+    //TODO: need to add check if isDirty, save if it is, check that autosave is enabled
     private _onOpen(doc: TextDocument): void {
         if (doc.languageId !== 'python') {
             return;
