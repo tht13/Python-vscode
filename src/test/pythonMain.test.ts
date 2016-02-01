@@ -10,8 +10,8 @@ import * as path from 'path';
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 import * as vscode from 'vscode';
-import * as pythonMain from '../src/pythonMain';
-let extenstionRoot = path.join(__dirname, '..', '..', '..');
+import * as pythonMain from '../client/src/pythonMain';
+let extenstionRoot = path.join(__dirname, '..', '..');
 // Defines a Mocha test suite to group tests of similar kind together
 suite("Python for VSCode Tests", () => {
     // Defines a Mocha unit test
@@ -20,7 +20,7 @@ suite("Python for VSCode Tests", () => {
         testPython.setExtenstionRoot(extenstionRoot);
         testPython.startServer();
 
-        let pythonTestFile = path.join(extenstionRoot, 'src', 'client', 'test', 'python', 'test_1.py');
+        let pythonTestFile = path.join(extenstionRoot, 'src', 'test', 'python', 'test_1.py');
 
         vscode.workspace.openTextDocument(pythonTestFile).then((document) => {
             try {

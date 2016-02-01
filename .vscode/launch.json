@@ -17,10 +17,10 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/client/test" ],
+			"args": ["--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test" ],
 			"stopOnEntry": false,
 			"sourceMaps": true,
-			"outDir": "out/client/test",
+			"outDir": "out/test",
 			"preLaunchTask": "npm"
 		}
 	]
