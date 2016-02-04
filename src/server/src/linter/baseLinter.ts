@@ -1,3 +1,4 @@
+"use strict";
 import { RemoteConsole, Diagnostic, 
     DiagnosticSeverity, Range, 
     ITextDocument } from 'vscode-languageserver';
@@ -10,12 +11,13 @@ export class BaseLinter {
     protected _args: string[];
     protected _filepath: string;
     protected _documentText: string[];
-    protected _regExp: RegExp;
     protected _severityMap: Map<string, DiagnosticSeverity>;
+    private _regExp: RegExp;
     private _consoleEnabled: boolean = false;
     private _console: RemoteConsole;
 
-    constructor(target: string, args: string[] = []) {
+    constructor(target: string, args?: string[]) {
+        args = args || [];
         this._target = target;
         this._args = args;
         this.buildSeverityMap();
@@ -27,16 +29,13 @@ export class BaseLinter {
      */
     getCmd(): string {
         if (validatePath(this._filepath)) {
-            let cmd: string[] = [this._target, ...this._args, this._filepath];
+            //TODO: destructuring not allowed yet e.g. ...this.args
+            let cmd: string[] = [].concat([this._target], this._args, [this._filepath]);
             return cmd.join(" ");
         } else {
             this.error(`Error generating command`)
             this.error(`File does not exist: ${this._filepath}`);
         }
-    }
-
-    getRegex(): RegExp {
-        return this._regExp;
     }
     
     /**
@@ -60,6 +59,10 @@ export class BaseLinter {
             this.error(`Target does not exist: ${target}`);
         }
     }
+
+    getRegExp(): RegExp {
+        return this._regExp;
+    }
     
     /**
      * Set the RegExp to use to parse lint results
@@ -67,7 +70,8 @@ export class BaseLinter {
      * @param  {string} pattern The regular expression patter
      * @param  {string=""} flags A string of character flags (igm) to use in the RegExp, Defaults to none
      */
-    setRegex(pattern: string, flags: string = "") {
+    setRegExp(pattern: string, flags?: string) {
+        flags = flags || "";
         try {
             let regExp = new RegExp(pattern, flags);
             this._regExp = regExp;
@@ -179,4 +183,14 @@ export class BaseLinter {
     protected log(message: string) {
         if (this._consoleEnabled) this._console.log(message);
     }
+    
+}
+export interface MatchProperties {
+    completeMatch: string,
+    severityKey: string,
+    line: number,
+    column: number,
+    message: string,
+    object?: string,
+    filepath?: string
 }

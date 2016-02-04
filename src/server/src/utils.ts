@@ -1,3 +1,4 @@
+"use strict";
 import 'process';
 import fs = require('fs');
 
@@ -10,7 +11,7 @@ import fs = require('fs');
  */
 export function fixPath(path: string): string {
     if (/^win/.test(process.platform)) {
-        path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
+        path = path.replace('file:///', '').replace('%3A', ':').replace(/\//g, '\\');
     } else {
         path = path.replace('file://', '');
     }

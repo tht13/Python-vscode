@@ -10,8 +10,8 @@ CompletionItem, CompletionItemKind
 import { exec } from 'child_process';
 import 'process';
 import { Request, RequestResult } from '../../client/src/request';
-import { PyLinter } from './linter/pyLint';
 import { BaseLinter } from './linter/baseLinter';
+import { PyLinter } from './linter/pyLint';
 import { fixPath } from './utils';
 
 // Create a connection for the server. The connection uses 
@@ -113,7 +113,9 @@ function validateTextDocument(textDocument: ITextDocument): void {
         let diagnostics: Diagnostic[] = [];
         for (let result of results) {
             let diagnostic = linter.parseLintResult(result);
+            if (diagnostic != null) {
             diagnostics.push(diagnostic);
+            }
         }
         connection.console.log(`File: ${linter.getFilepath()} - Errors Found: ${diagnostics.length.toString()}`);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
