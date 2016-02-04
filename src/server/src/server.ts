@@ -15,6 +15,23 @@ import { PyLinter } from './linter/pyLint';
 import { Flake8 } from './linter/flake8';
 import { fixPath } from './utils';
 
+enum LinterType {
+    FLAKE8,
+    PYLINTER
+}
+
+// The settings interface describe the server relevant settings part
+interface Settings {
+    python: PythonSettings;
+}
+
+// These are the python settings we defined in the client's package.json
+// file
+interface PythonSettings {
+    maxNumberOfProblems: number;
+    linter: LinterType
+}
+
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -26,15 +43,22 @@ let documents: TextDocuments = new TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
+// hold the maxNumberOfProblems setting
+let maxNumberOfProblems: number;
+
+// hold linter type
+let linterType: LinterType;
+
 // Linter
-let linter: BaseLinter = new PyLinter();
-linter.enableConsole(connection.console);
+let linter: BaseLinter;
 
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites. 
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
     workspaceRoot = params.rootPath;
+    linter = getLinterType(linterType);
+    linter.enableConsole(connection.console);
     return {
         capabilities: {
             // Tell the client that the server works in FULL text document sync mode
@@ -47,24 +71,13 @@ connection.onInitialize((params): InitializeResult => {
     }
 });
 
-// The settings interface describe the server relevant settings part
-interface Settings {
-    python: PythonSettings;
-}
-
-// These are the python settings we defined in the client's package.json
-// file
-interface PythonSettings {
-    maxNumberOfProblems: number;
-}
-
-// hold the maxNumberOfProblems setting
-let maxNumberOfProblems: number;
 // The settings have changed. Is send on server activation
 // as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <Settings>change.settings;
     maxNumberOfProblems = settings.python.maxNumberOfProblems || 100;
+    linterType = settings.python.linter || LinterType.PYLINTER;
+    linter = getLinterType(linterType);
     // Revalidate any open text documents
     documents.all().forEach(validateTextDocument);
 });
@@ -129,6 +142,17 @@ connection.onDidChangeWatchedFiles((change) => {
     connection.console.log('We recevied an file change event');
     documents.all().forEach(validateTextDocument);
 });
+
+function getLinterType(type: LinterType): BaseLinter {
+    switch (type) {
+        case LinterType.FLAKE8:
+            return new Flake8();
+        case LinterType.PYLINTER:
+            return new PyLinter();
+        default:
+            return new PyLinter();
+    }
+}
 
 
 // This handler provides the initial list of the completion items.
