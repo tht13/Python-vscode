@@ -12,6 +12,7 @@ import 'process';
 import { Request, RequestResult } from '../../client/src/request';
 import { BaseLinter } from './linter/baseLinter';
 import { PyLinter } from './linter/pyLint';
+import { Flake8 } from './linter/flake8';
 import { fixPath } from './utils';
 
 // Create a connection for the server. The connection uses 
@@ -100,6 +101,7 @@ function validateTextDocument(textDocument: ITextDocument): void {
     linter.setDocument(textDocument);
     let cmd: string = linter.getCmd();
 
+    //TODO: Flake8 outputs to stderr, need to determine output buffer to parse
     exec(cmd, function(error: Error, stdout: ArrayBuffer, stderr: ArrayBuffer) {
         if (error.toString().length !== 0) {
             connection.console.warn(`[ERROR] File: ${linter.getFilepath()} - Error message: ${error.toString()}`);
@@ -114,7 +116,7 @@ function validateTextDocument(textDocument: ITextDocument): void {
         for (let result of results) {
             let diagnostic = linter.parseLintResult(result);
             if (diagnostic != null) {
-            diagnostics.push(diagnostic);
+                diagnostics.push(diagnostic);
             }
         }
         connection.console.log(`File: ${linter.getFilepath()} - Errors Found: ${diagnostics.length.toString()}`);
