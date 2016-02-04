@@ -95,7 +95,18 @@ export class PythonExtension {
     }
     
     public testDoc(doc: TextDocument) {
-        this._onOpen(doc);
+        if (doc.languageId !== 'python') {
+            return;
+        }
+        let params: RequestParams = { processId: process.pid, uri: doc.uri, requestEventType: RequestEventType.TEST };
+        let cb = (result: RequestResult) => {
+            if (!result.succesful) {
+                console.error("Lintings failed on open");
+                console.error(`File: ${params.uri.toString()}`);
+                console.error(`Message: ${result.message}`);
+            }
+        }
+        this._doRequest(params, cb);
     }
 
     private _doRequest(params: RequestParams, cb: (RequestResult) => void): void {

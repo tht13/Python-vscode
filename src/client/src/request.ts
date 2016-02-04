@@ -51,5 +51,6 @@ export interface RequestError {
 export enum RequestEventType {
     SAVE,
     OPEN,
-    CONFIG
+    CONFIG,
+    TEST
 }
