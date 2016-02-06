@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic,
 DiagnosticCollection, Range, Disposable, TextDocument, window,
-WorkspaceConfiguration } from 'vscode';
+WorkspaceConfiguration, TextDocumentChangeEvent, Position } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions,
 TransportKind } from 'vscode-languageclient';
 import { Request, RequestParams, RequestResult, RequestError, RequestEventType } from './request';
@@ -88,7 +88,40 @@ class PythonExtension {
         }
         this._doRequest(params, cb);
     }
-    
+
+    private _onChange(e: TextDocumentChangeEvent): void {
+        let doc = e.document;
+        let changes = e.contentChanges[0];
+        if (doc.languageId !== 'python' &&
+            !changes.text.includes('\n') &&
+            !changes.text.includes('\r\n')) {
+            return;
+        }
+        let range = changes.range;
+        let changeLine = doc.lineAt(range.start.line);
+        // if the new Line occured after a ':' then add indentation
+        if (changeLine.text.search(/:[\s]*$/) !== -1) {
+            if (window.activeTextEditor.document.version !==
+                doc.version) {
+                return;
+            }
+            window.activeTextEditor.edit(editBuilder => {
+                //TODO: ensure that the indentation has not already been done
+                let editorConfig = workspace.getConfiguration("editor");
+                let insertSpaces = editorConfig.get<boolean>("insertSpaces");
+                if (!insertSpaces) {
+                    editBuilder.insert(new Position(range.start.line + 1, 0), "\t");
+                } else {
+                    let tabSize = editorConfig.get<string | number>("tabSize");
+                    if (tabSize == "auto" || isNaN(<number>tabSize)) {
+                        tabSize = 4;
+                    }
+                    editBuilder.insert(new Position(range.start.line + 1, 0), " ".repeat(<number>tabSize));
+                }
+            });
+        }
+    }
+
     private _sendConfig(): void {
         let configuration: WorkspaceConfiguration = workspace.getConfiguration('python');
         let params: RequestParams = {
@@ -114,6 +147,7 @@ class PythonExtension {
         let subscriptions: Disposable[] = [];
         workspace.onDidSaveTextDocument(this._onSave, this, subscriptions);
         workspace.onDidOpenTextDocument(this._onOpen, this, subscriptions);
+        workspace.onDidChangeTextDocument(this._onChange, this, subscriptions);
     }
 
     public startServer(): Disposable {
