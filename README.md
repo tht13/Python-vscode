@@ -19,6 +19,7 @@ Linting can be customised with a `.pylintrc` file in the root of the current wor
 * [ ] Gulp tasks
 * [ ] Tests
 * [x] Travis
+  * [ ] save npm log on build fail
 * [ ] Debugging
 * [x] Linting
   * [x] Lint on save of file

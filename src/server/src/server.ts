@@ -85,7 +85,7 @@ function loadSettings(pythonSettings: any): void {
     linterType = pythonSettings.linter || LinterType.PYLINTER;
     linter = getLinterType(linterType);
     connection.console.log("setings");
-    connection.console.log(maxNumberOfProblems);
+    connection.console.log(maxNumberOfProblems.toString());
     connection.console.log(pythonSettings.linter);
 }
 
