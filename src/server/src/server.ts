@@ -9,7 +9,7 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
-import { Request, RequestResult, RequestEventType } from '../../client/src/request';
+import { Request, RequestResult, RequestEventType, RequestParams } from '../../client/src/request';
 import { BaseLinter } from './linter/baseLinter';
 import { PyLinter } from './linter/pyLint';
 import { Flake8 } from './linter/flake8';
@@ -101,7 +101,7 @@ function loadSettings(pythonSettings: any): void {
  * Handles requests from the client
  * Returns the status of the handle attempt
  */
-connection.onRequest(Request.type, (params): RequestResult => {
+connection.onRequest(Request.type, (params: RequestParams): RequestResult => {
     connection.console.log("REQUEST");
     connection.console.log("REQUEST EVENT TYPE: " + params.requestEventType);
     let result: RequestResult;
