@@ -32,6 +32,8 @@ interface PythonSettings {
     linter: LinterType
 }
 
+const DEFAULT_LINTER = "pyLint";
+
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -46,8 +48,14 @@ documents.listen(connection);
 // hold the maxNumberOfProblems setting
 let maxNumberOfProblems: number;
 
+
+let linterMap: Map<string, LinterType> = new Map();
+linterMap.set(DEFAULT_LINTER, LinterType.PYLINTER);
+linterMap.set("pyLint", LinterType.PYLINTER);
+linterMap.set("flake8", LinterType.FLAKE8);
+
 // hold linter type
-let linterType: LinterType;
+let linterType: LinterType = getLinterType(DEFAULT_LINTER);
 
 // Linter
 let linter: BaseLinter;
@@ -57,7 +65,7 @@ let linter: BaseLinter;
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
     workspaceRoot = params.rootPath;
-    linter = getLinterType(linterType);
+    linter = loadLinter(linterType);
     linter.enableConsole(connection.console);
     return {
         capabilities: {
@@ -82,8 +90,8 @@ connection.onDidChangeConfiguration((change) => {
 
 function loadSettings(pythonSettings: any): void {
     maxNumberOfProblems = pythonSettings.maxNumberOfProblems || 100;
-    linterType = pythonSettings.linter || LinterType.PYLINTER;
-    linter = getLinterType(linterType);
+    linterType = getLinterType(pythonSettings.linter || DEFAULT_LINTER);
+    linter = loadLinter(linterType);
     connection.console.log("setings");
     connection.console.log(maxNumberOfProblems.toString());
     connection.console.log(pythonSettings.linter);
@@ -158,7 +166,7 @@ connection.onDidChangeWatchedFiles((change) => {
     documents.all().forEach(validateTextDocument);
 });
 
-function getLinterType(type: LinterType): BaseLinter {
+function loadLinter(type: LinterType): BaseLinter {
     switch (type) {
         case LinterType.FLAKE8:
             return new Flake8();
@@ -167,6 +175,13 @@ function getLinterType(type: LinterType): BaseLinter {
         default:
             return new PyLinter();
     }
+}
+
+function getLinterType(linter: string): LinterType {
+    if (linterMap.has(linter)) {
+        return linterMap.get(linter);
+    }
+    return linterMap.get(DEFAULT_LINTER);
 }
 
 
