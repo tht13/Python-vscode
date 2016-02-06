@@ -4,7 +4,7 @@
     "displayName": "Python for VSCode",
     "title": "Python for VSCode",
     "description": "Python language extension for vscode",
-	"authors": [
+    "authors": [
         "Thomas Haakon Townsend"
     ],
     "publisher": "tht13",
@@ -12,23 +12,23 @@
         "type": "git",
         "url": "https://github.com/tht13/Python-vscode.git"
     },
-	"license": "MIT",
+    "license": "MIT",
     "engines": {
         "vscode": "0.10.x"
     },
-	"scripts": {
-		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+    "scripts": {
+        "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
         "compile": "installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && node ./node_modules/vscode/bin/compile -p ./",
         "build": "node ./node_modules/vscode/bin/compile -p ./"
-	},
-	"devDependencies": {
-		"typescript": "^1.7.5",
-		"vscode": "^0.10.7"
-	},
-	"dependencies": {
-		"vscode-languageclient": "^1.3.1",
-		"vscode-languageserver": "^1.3.0"
-	},
+    },
+    "devDependencies": {
+        "typescript": "^1.7.5",
+        "vscode": "^0.10.7"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^1.3.1",
+        "vscode-languageserver": "^1.3.0"
+    },
     "activationEvents": [
         "onLanguage:python"
     ],
@@ -91,16 +91,29 @@
                 "url": "/schemas/pyconfig.schema.json"
             }
         ],
-		"configuration": {
-			"type": "object",
-			"title": "Python configuration",
-			"properties": {
-				"python.maxNumberOfProblems": {
-					"type": "number",
-					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
-				}
-			}
-		}
+        "configuration": {
+            "type": "object",
+            "title": "Python configuration",
+            "properties": {
+                "python.maxNumberOfProblems": {
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                },
+                "python.linterType": {
+                    "type": "string",
+                    "default": "pyLint",
+                    "description": "The linter to use",
+                    "oneOf": [
+                        {
+                            "default": "pyLint"
+                        },
+                        {
+                            "default": "flake8"
+                        }
+                    ]
+                }
+            }
+        }
     }
 }

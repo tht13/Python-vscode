@@ -9,7 +9,7 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
-import { Request, RequestResult } from '../../client/src/request';
+import { Request, RequestResult, RequestEventType } from '../../client/src/request';
 import { BaseLinter } from './linter/baseLinter';
 import { PyLinter } from './linter/pyLint';
 import { Flake8 } from './linter/flake8';
@@ -75,12 +75,19 @@ connection.onInitialize((params): InitializeResult => {
 // as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <Settings>change.settings;
-    maxNumberOfProblems = settings.python.maxNumberOfProblems || 100;
-    linterType = settings.python.linter || LinterType.PYLINTER;
-    linter = getLinterType(linterType);
+    loadSettings(settings.python);
     // Revalidate any open text documents
     documents.all().forEach(validateTextDocument);
 });
+
+function loadSettings(pythonSettings: any): void {
+    maxNumberOfProblems = pythonSettings.maxNumberOfProblems || 100;
+    linterType = pythonSettings.linter || LinterType.PYLINTER;
+    linter = getLinterType(linterType);
+    connection.console.log("setings");
+    connection.console.log(maxNumberOfProblems);
+    connection.console.log(pythonSettings.linter);
+}
 
 /**
  * Handles requests from the client
@@ -90,16 +97,24 @@ connection.onRequest(Request.type, (params): RequestResult => {
     connection.console.log("REQUEST");
     connection.console.log("REQUEST EVENT TYPE: " + params.requestEventType);
     let result: RequestResult;
-    try {
-        validateTextDocument(documents.get(params.uri.toString()));
-        result = {
-            succesful: true
-        };
-    } catch (exception) {
-        result = {
-            succesful: false,
-            message: exception.toString()
-        };
+    switch (params.requestEventType) {
+        case RequestEventType.OPEN:
+        case RequestEventType.SAVE:
+            try {
+                validateTextDocument(documents.get(params.uri.toString()));
+                result = {
+                    succesful: true
+                };
+            } catch (exception) {
+                result = {
+                    succesful: false,
+                    message: exception.toString()
+                };
+            }
+            break;
+        case RequestEventType.CONFIG:
+            loadSettings(params.configuration);
+            break;
     }
     return result;
 });

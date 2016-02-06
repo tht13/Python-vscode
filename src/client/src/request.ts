@@ -1,4 +1,4 @@
-import { Uri } from 'vscode';
+import { Uri, WorkspaceConfiguration } from 'vscode';
 import { RequestType } from 'vscode-languageclient';
 export namespace Request {
 	export const type: RequestType<RequestParams, RequestResult, RequestError> = { get method() { return 'request'; } };
@@ -13,12 +13,18 @@ export interface RequestParams {
 	 * the server.
 	 */
 	processId: number;
-
+    
 	/**
 	 * The uri. Is null
 	 * if no folder is open.
 	 */
-	uri: Uri;
+	uri?: Uri;
+    
+    /**
+     * The configuration option to sent
+     * requestEventType must be set to CONFIG
+     */
+    configuration?: WorkspaceConfiguration;
     
     /**
      * The type of request event to handle.

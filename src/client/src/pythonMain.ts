@@ -3,7 +3,8 @@
 import * as path from 'path';
 
 import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic,
-DiagnosticCollection, Range, Disposable, TextDocument, window } from 'vscode';
+DiagnosticCollection, Range, Disposable, TextDocument, window,
+WorkspaceConfiguration } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions,
 TransportKind } from 'vscode-languageclient';
 import { Request, RequestParams, RequestResult, RequestError, RequestEventType } from './request';
@@ -82,6 +83,22 @@ class PythonExtension {
             if (!result.succesful) {
                 console.error("Lintings failed on open");
                 console.error(`File: ${params.uri.toString()}`);
+                console.error(`Message: ${result.message}`);
+            }
+        }
+        this._doRequest(params, cb);
+    }
+    
+    private _sendConfig(): void {
+        let configuration: WorkspaceConfiguration = workspace.getConfiguration('python');
+        let params: RequestParams = {
+            processId: process.pid,
+            configuration: configuration,
+            requestEventType: RequestEventType.CONFIG
+        };
+        let cb = (result: RequestResult) => {
+            if (!result.succesful) {
+                console.error("Error loading configuration");
                 console.error(`Message: ${result.message}`);
             }
         }
