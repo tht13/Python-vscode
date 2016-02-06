@@ -18,17 +18,34 @@
 	"isShellCommand": true,
 
 	// Show the output window only if unrecognized errors occur.
-	"showOutput": "silent",
+	"showOutput": "always",
 
-	// we run the custom script "compile" as defined in package.json
-	"args": ["run", "compile"],
+	
 
 	// The tsc compiler is started in watching mode
 	"isWatching": false,
+    "echoCommand": true,
 
 	// use the standard tsc problem matcher to find compile problems
 	// in the output.
-	"problemMatcher": "$tsc"
+    "tasks": [
+        {
+            "taskName": "default",
+            // we run the custom script "compile" as defined in package.json
+            "args": ["run", "compile"],
+            "problemMatcher": "$tsc",
+            "isTestCommand": true,
+            "suppressTaskName": true
+        },
+        {
+            "taskName": "build",
+            // we run the custom script "compile" as defined in package.json
+            "args": ["run", "build"],
+            "echoCommand": false,
+            "isBuildCommand": true,
+            "problemMatcher": "$tsc"
+        }
+    ]
 }
 
 // A task runner that calls the Typescript compiler (tsc) and
