@@ -149,6 +149,9 @@ function validateTextDocument(textDocument: ITextDocument): void {
         // process linter output
         let diagnostics: Diagnostic[] = [];
         for (let result of results) {
+            if (diagnostics.length >= maxNumberOfProblems) {
+                break;
+            } 
             let diagnostic = linter.parseLintResult(result);
             if (diagnostic != null) {
                 diagnostics.push(diagnostic);
