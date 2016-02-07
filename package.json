@@ -1,6 +1,6 @@
 {
     "name": "python",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "displayName": "Python for VSCode",
     "title": "Python for VSCode",
     "description": "Python language extension for vscode",
