@@ -1,19 +1,23 @@
+"use strict";
 import { RemoteConsole, Diagnostic, 
     DiagnosticSeverity, Range, 
     ITextDocument } from 'vscode-languageserver';
-import { fixPath } from './../utils';
+import { fixPath, validatePath } from './../utils';
+
+//TODO: Handle false return from validatePath better
 
 export class BaseLinter {
     protected _target: string;
     protected _args: string[];
     protected _filepath: string;
     protected _documentText: string[];
-    protected _regexMatch: RegExp;
     protected _severityMap: Map<string, DiagnosticSeverity>;
+    private _regExp: RegExp;
     private _consoleEnabled: boolean = false;
     private _console: RemoteConsole;
 
-    constructor(target: string, args: string[] = []) {
+    constructor(target: string, args?: string[]) {
+        args = args || [];
         this._target = target;
         this._args = args;
         this.buildSeverityMap();
@@ -24,38 +28,73 @@ export class BaseLinter {
      * @returns string
      */
     getCmd(): string {
-        if (this.validateFilepath(this._filepath)) {
-            let cmd: string[] = [this._target, ...this._args, this._filepath];
+        if (validatePath(this._filepath)) {
+            //TODO: destructuring not allowed yet e.g. ...this.args
+            let cmd: string[] = [].concat([this._target], this._args, [this._filepath]);
             return cmd.join(" ");
+        } else {
+            this.error(`Error generating command`)
+            this.error(`File does not exist: ${this._filepath}`);
+        }
+    }
+    
+    /**
+     * Get the target linter to execute
+     * @returns string
+     */
+    getTarget(): string {
+        return this._target;
+    }
+    
+    /**
+     * Set the command line target for the linter
+     * Used when a linter is in a custom location
+     * @param  {string} target The target of the linter
+     */
+    setTarget(target: string) {
+        if (validatePath(target)) {
+            this._target = target;
+        } else {
+            this.error(`Error setting target`)
+            this.error(`Target does not exist: ${target}`);
         }
     }
 
-    getRegex(): RegExp {
-        return this._regexMatch;
+    getRegExp(): RegExp {
+        return this._regExp;
     }
-
-    setRegex(regExp: RegExp) {
-        //TODO: should perform a test for valid regex
-        this._regexMatch = regExp;
+    
+    /**
+     * Set the RegExp to use to parse lint results
+     * @throws {EvalError} Thrown when the input pattern is invalid
+     * @param  {string} pattern The regular expression patter
+     * @param  {string=""} flags A string of character flags (igm) to use in the RegExp, Defaults to none
+     */
+    setRegExp(pattern: string, flags?: string) {
+        flags = flags || "";
+        try {
+            let regExp = new RegExp(pattern, flags);
+            this._regExp = regExp;
+        } catch (e) {
+            this.warn(e.toString());
+            throw new EvalError();
+        }
     }
 
     setDocument(doc: ITextDocument) {
         let path = fixPath(doc.uri);
-        if (this.validateFilepath(path)) this._filepath = path;
-        this._documentText = doc.getText().split(/\r?\n/g);
-        this.log(`Loaded document: ${this._filepath}`);
+        if (validatePath(path)) {
+            this._filepath = path;
+            this._documentText = doc.getText().split(/\r?\n/g);
+            this.log(`Loaded document: ${this._filepath}`);
+        } else {
+            this.error(`Error loading document`)
+            this.error(`File does not exist: ${path}`);
+        }
     }
 
     getFilepath(): string {
         return this._filepath;
-    }
-    
-    //TODO: validate path is actual file
-    private validateFilepath(path): boolean {
-        if (path === "" || path === null || path === undefined) {
-            throw new ReferenceError();
-        }
-        return true;
     }
 
     fixResults(results: string[]): string[] {
@@ -144,4 +183,14 @@ export class BaseLinter {
     protected log(message: string) {
         if (this._consoleEnabled) this._console.log(message);
     }
+    
+}
+export interface MatchProperties {
+    completeMatch: string,
+    severityKey: string,
+    line: number,
+    column: number,
+    message: string,
+    object?: string,
+    filepath?: string
 }

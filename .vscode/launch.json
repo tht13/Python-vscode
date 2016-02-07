@@ -10,7 +10,18 @@
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outDir": "out/client/src",
-			"preLaunchTask": "npm"
+			"preLaunchTask": "default"
+		},
+		{
+			"name": "Launch Extension Offline",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outDir": "out/client/src",
+			"preLaunchTask": "build"
 		},
 		{
 			"name": "Launch Tests",
@@ -21,7 +32,7 @@
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outDir": "out/test",
-			"preLaunchTask": "npm"
+			"preLaunchTask": "default"
 		}
 	]
 }

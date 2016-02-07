@@ -9,10 +9,30 @@ CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
-import { Request, RequestResult } from '../../client/src/request';
-import { PyLinter } from './linter/pyLint';
+import { Request, RequestResult, RequestEventType, RequestParams } from '../../client/src/request';
 import { BaseLinter } from './linter/baseLinter';
+import { PyLinter } from './linter/pyLint';
+import { Flake8 } from './linter/flake8';
 import { fixPath } from './utils';
+
+enum LinterType {
+    FLAKE8,
+    PYLINTER
+}
+
+// The settings interface describe the server relevant settings part
+interface Settings {
+    python: PythonSettings;
+}
+
+// These are the python settings we defined in the client's package.json
+// file
+interface PythonSettings {
+    maxNumberOfProblems: number;
+    linter: LinterType
+}
+
+const DEFAULT_LINTER = "pyLint";
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -25,15 +45,28 @@ let documents: TextDocuments = new TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
+// hold the maxNumberOfProblems setting
+let maxNumberOfProblems: number;
+
+
+let linterMap: Map<string, LinterType> = new Map();
+linterMap.set(DEFAULT_LINTER, LinterType.PYLINTER);
+linterMap.set("pyLint", LinterType.PYLINTER);
+linterMap.set("flake8", LinterType.FLAKE8);
+
+// hold linter type
+let linterType: LinterType = getLinterType(DEFAULT_LINTER);
+
 // Linter
-let linter: BaseLinter = new PyLinter();
-linter.enableConsole(connection.console);
+let linter: BaseLinter;
 
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites. 
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
     workspaceRoot = params.rootPath;
+    linter = loadLinter(linterType);
+    linter.enableConsole(connection.console);
     return {
         capabilities: {
             // Tell the client that the server works in FULL text document sync mode
@@ -46,46 +79,50 @@ connection.onInitialize((params): InitializeResult => {
     }
 });
 
-// The settings interface describe the server relevant settings part
-interface Settings {
-    python: PythonSettings;
-}
-
-// These are the python settings we defined in the client's package.json
-// file
-interface PythonSettings {
-    maxNumberOfProblems: number;
-}
-
-// hold the maxNumberOfProblems setting
-let maxNumberOfProblems: number;
 // The settings have changed. Is send on server activation
 // as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <Settings>change.settings;
-    maxNumberOfProblems = settings.python.maxNumberOfProblems || 100;
+    loadSettings(settings.python);
     // Revalidate any open text documents
     documents.all().forEach(validateTextDocument);
 });
+
+function loadSettings(pythonSettings: any): void {
+    maxNumberOfProblems = pythonSettings.maxNumberOfProblems || 100;
+    linterType = getLinterType(pythonSettings.linter || DEFAULT_LINTER);
+    linter = loadLinter(linterType);
+    connection.console.log("setings");
+    connection.console.log(maxNumberOfProblems.toString());
+    connection.console.log(pythonSettings.linter);
+}
 
 /**
  * Handles requests from the client
  * Returns the status of the handle attempt
  */
-connection.onRequest(Request.type, (params): RequestResult => {
+connection.onRequest(Request.type, (params: RequestParams): RequestResult => {
     connection.console.log("REQUEST");
     connection.console.log("REQUEST EVENT TYPE: " + params.requestEventType);
     let result: RequestResult;
-    try {
-        validateTextDocument(documents.get(params.uri.toString()));
-        result = {
-            succesful: true
-        };
-    } catch (exception) {
-        result = {
-            succesful: false,
-            message: exception.toString()
-        };
+    switch (params.requestEventType) {
+        case RequestEventType.OPEN:
+        case RequestEventType.SAVE:
+            try {
+                validateTextDocument(documents.get(params.uri.toString()));
+                result = {
+                    succesful: true
+                };
+            } catch (exception) {
+                result = {
+                    succesful: false,
+                    message: exception.toString()
+                };
+            }
+            break;
+        case RequestEventType.CONFIG:
+            loadSettings(params.configuration);
+            break;
     }
     return result;
 });
@@ -109,11 +146,16 @@ function validateTextDocument(textDocument: ITextDocument): void {
         let results: string[] = stdout.toString().split(/\r?\n/g);
         results = linter.fixResults(results);
         
-        // log error messages
+        // process linter output
         let diagnostics: Diagnostic[] = [];
         for (let result of results) {
+            if (diagnostics.length >= maxNumberOfProblems) {
+                break;
+            } 
             let diagnostic = linter.parseLintResult(result);
-            diagnostics.push(diagnostic);
+            if (diagnostic != null) {
+                diagnostics.push(diagnostic);
+            }
         }
         connection.console.log(`File: ${linter.getFilepath()} - Errors Found: ${diagnostics.length.toString()}`);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
@@ -125,6 +167,24 @@ connection.onDidChangeWatchedFiles((change) => {
     connection.console.log('We recevied an file change event');
     documents.all().forEach(validateTextDocument);
 });
+
+function loadLinter(type: LinterType): BaseLinter {
+    switch (type) {
+        case LinterType.FLAKE8:
+            return new Flake8();
+        case LinterType.PYLINTER:
+            return new PyLinter();
+        default:
+            return new PyLinter();
+    }
+}
+
+function getLinterType(linter: string): LinterType {
+    if (linterMap.has(linter)) {
+        return linterMap.get(linter);
+    }
+    return linterMap.get(DEFAULT_LINTER);
+}
 
 
 // This handler provides the initial list of the completion items.

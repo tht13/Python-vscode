@@ -1,7 +1,8 @@
 language: node_js
 node_js:
-  - "node"
-before_install:
+  - "4.1"
+before_script:
+  - npm install
   - mkdir out
 install:
   - npm install

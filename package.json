@@ -1,10 +1,10 @@
 {
     "name": "python",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "displayName": "Python for VSCode",
     "title": "Python for VSCode",
     "description": "Python language extension for vscode",
-	"authors": [
+    "authors": [
         "Thomas Haakon Townsend"
     ],
     "publisher": "tht13",
@@ -12,7 +12,7 @@
         "type": "git",
         "url": "https://github.com/tht13/Python-vscode.git"
     },
-	"license": "MIT",
+    "license": "MIT",
     "engines": {
         "vscode": "0.10.x"
     },
@@ -91,16 +91,29 @@
                 "url": "/schemas/pyconfig.schema.json"
             }
         ],
-		"configuration": {
-			"type": "object",
-			"title": "Python configuration",
-			"properties": {
-				"python.maxNumberOfProblems": {
-					"type": "number",
-					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
-				}
-			}
-		}
+        "configuration": {
+            "type": "object",
+            "title": "Python configuration",
+            "properties": {
+                "python.maxNumberOfProblems": {
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                },
+                "python.linter": {
+                    "type": "string",
+                    "default": "pyLint",
+                    "description": "The linter to use",
+                    "oneOf": [
+                        {
+                            "default": "pyLint"
+                        },
+                        {
+                            "default": "flake8"
+                        }
+                    ]
+                }
+            }
+        }
     }
 }

@@ -1,13 +1,14 @@
+"use strict";
 import { RemoteConsole, Diagnostic, DiagnosticSeverity, Range } from 'vscode-languageserver';
-import { BaseLinter } from './baseLinter';
+import { BaseLinter, MatchProperties } from './baseLinter';
 
-//TODO: expose target to specify path to pylint
 export class PyLinter extends BaseLinter {
-    constructor(args: string[] = []) {
+    constructor(args?: string[]) {
+        args = args || [];
         let target = "pylint";
         let pylintArgs = ["-r", "n"];
         super(target, args.concat(pylintArgs));
-        this.setRegex(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) \((.*)\)/);
+        this.setRegExp("(\\w):([\\s\\d]{3,}),([\\s\\d]{2,}): (.+?) \\((.*)\\)");
         this.buildSeverityMap();
     }
 
@@ -32,33 +33,50 @@ export class PyLinter extends BaseLinter {
 
     parseLintResult(lint: string): Diagnostic {
         let diagnostic: Diagnostic;
-        let [completeMatch,
-            severityKey,
-            line,
-            column,
-            message,
-            object] = lint.match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) \((.*)\)/);
-
-        if (completeMatch == null) {
-            this.warn("unparsed line:");
-            this.warn(lint);
-            return;
+        
+        //TODO: vscode node does not yet support destructuring
+        // Find out if typescript can specify es5 parts and es6 parts for compile
+        // Here and other places
+        
+        let matchProperties: MatchProperties;
+        // destructuring not yet supported in vscode
+        // must be done manually
+        {
+            //TODO: parse null better
+            let match = lint.match(this.getRegExp());
+            if (match == null) {
+                this.warn("unparsed line:");
+                this.warn(lint);
+                return;
+            }
+            matchProperties = {
+                completeMatch: match[0],
+                severityKey: match[1],
+                line: parseInt(match[2]) - 1,
+                column: parseInt(match[3]),
+                message: match[4],
+                object: match[5]
+            };
         }
 
-        let severity = this._severityMap.has(severityKey) ? this._severityMap.get(severityKey) : DiagnosticSeverity.Error;
+
+        let severity = this._severityMap.has(matchProperties.severityKey)
+            ? this._severityMap.get(matchProperties.severityKey)
+            : DiagnosticSeverity.Error;
 
         let quote: string = null;
+        //TODO: try to implement this better
         // check for variable name or line in message
-        if (message.indexOf('"') !== -1) {
-            quote = message.match(/\\?"(.*?)\\?"/)[1];
-        } else if (message.indexOf("'") !== -1) {
-            quote = message.match(/'(.*)'/)[1];
+        if (matchProperties.message.indexOf('"') !== -1) {
+            quote = matchProperties.message.match(/\\?"(.*?)\\?"/)[1];
+        } else if (matchProperties.message.indexOf("'") !== -1) {
+            quote = matchProperties.message.match(/'(.*)'/)[1];
         }
             
         // implement multiLine messages
         // ie lineStart and lineEnd
-        let lineNumber = parseInt(lint) - 1;
-        let colStart = parseInt(column);
+        let lineNumber = matchProperties.line;
+        let colStart = matchProperties.column;
         let colEnd = this._documentText[lineNumber].length;
         let documentLine: string = this._documentText[lineNumber];
         if (quote !== null) {
@@ -75,12 +93,12 @@ export class PyLinter extends BaseLinter {
         if (colStart == 0 && documentLine.substr(0, 1).match(/\s/) !== null) {
             colStart = documentLine.length - documentLine.replace(/^\s*/g, "").length;
         }
-        this.log(`${JSON.stringify(completeMatch)}`);
+        this.log(`${JSON.stringify(matchProperties.completeMatch)}`);
 
         diagnostic = {
             severity: severity,
             range: this.createRange(lineNumber, colStart, lineNumber, colEnd),
-            message: message + ': ' + object
+            message: matchProperties.message + ': ' + matchProperties.object
         };
 
         return diagnostic;
