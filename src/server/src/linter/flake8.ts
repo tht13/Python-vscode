@@ -29,21 +29,21 @@ export class Flake8 extends BaseLinter {
         // destructuring not yet supported in vscode
         // must be done manually
         {
+            //TODO: parse null better
             let match = lint.match(this.getRegExp());
+            if (match == null) {
+                this.warn("unparsed line:");
+                this.warn(lint);
+                return;
+            }
             matchProperties = {
                 completeMatch: match[0],
                 filepath: match[1],
                 line: parseInt(match[2]) - 1,
-                column: parseInt(match[3]),
+                column: parseInt(match[3]) - 1,
                 severityKey: match[4],
                 message: match[5]
             };
-        }
-
-        if (matchProperties.completeMatch == null) {
-            this.warn("unparsed line:");
-            this.warn(lint);
-            return;
         }
 
         let severity = this._severityMap.has(matchProperties.severityKey.substring(0, 1))

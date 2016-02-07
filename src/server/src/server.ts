@@ -137,7 +137,6 @@ function validateTextDocument(textDocument: ITextDocument): void {
     linter.setDocument(textDocument);
     let cmd: string = linter.getCmd();
 
-    //TODO: Flake8 outputs to stderr, need to determine output buffer to parse
     exec(cmd, function(error: Error, stdout: ArrayBuffer, stderr: ArrayBuffer) {
         if (error.toString().length !== 0) {
             connection.console.warn(`[ERROR] File: ${linter.getFilepath()} - Error message: ${error.toString()}`);
@@ -147,7 +146,7 @@ function validateTextDocument(textDocument: ITextDocument): void {
         let results: string[] = stdout.toString().split(/\r?\n/g);
         results = linter.fixResults(results);
         
-        // log error messages
+        // process linter output
         let diagnostics: Diagnostic[] = [];
         for (let result of results) {
             let diagnostic = linter.parseLintResult(result);
