@@ -27,11 +27,11 @@ export class PythonExtension {
     private _context: ExtensionContext;
     private _languageClient: LanguageClient;
     private _rootExtenstion: string;
-    
+
     setContext(context: ExtensionContext) {
         this._context = context;
     }
-    
+
     setExtenstionRoot(path: string) {
         this._rootExtenstion = path;
     }
@@ -94,7 +94,7 @@ export class PythonExtension {
         }
         this._doRequest(params, cb);
     }
-    
+
     public testDoc(doc: TextDocument) {
         if (doc.languageId !== 'python') {
             return;
@@ -113,12 +113,14 @@ export class PythonExtension {
     private _onChange(e: TextDocumentChangeEvent): void {
         let doc = e.document;
         let changes = e.contentChanges[0];
-        if (doc.languageId !== 'python' &&
-            !changes.text.includes('\n') &&
-            !changes.text.includes('\r\n')) {
+        if (doc.languageId !== 'python' ||
+            (!changes.text.includes('\n') &&
+            !changes.text.includes('\r\n'))) {
             return;
         }
         let range = changes.range;
+        // add two lines, one for index from 0, other for new line just inserted
+        if (range.end.line + 2 == doc.lineCount) return;
         let changeLine = doc.lineAt(range.start.line);
         // if the new Line occured after a ':' then add indentation
         if (changeLine.text.search(/:[\s]*$/) !== -1) {
@@ -130,14 +132,21 @@ export class PythonExtension {
                 //TODO: ensure that the indentation has not already been done
                 let editorConfig = workspace.getConfiguration("editor");
                 let insertSpaces = editorConfig.get<boolean>("insertSpaces");
+
+                let insertString: string;
                 if (!insertSpaces) {
-                    editBuilder.insert(new Position(range.start.line + 1, 0), "\t");
+                    insertString = "\t";
                 } else {
                     let tabSize = editorConfig.get<string | number>("tabSize");
                     if (tabSize == "auto" || isNaN(<number>tabSize)) {
                         tabSize = 4;
                     }
-                    editBuilder.insert(new Position(range.start.line + 1, 0), " ".repeat(<number>tabSize));
+                    insertString = " ".repeat(<number>tabSize);
+                }
+                let currentLineIndent = changeLine.firstNonWhitespaceCharacterIndex;
+                let nextLineIndent = doc.lineAt(range.start.line + 1).firstNonWhitespaceCharacterIndex;
+                if (currentLineIndent + insertString.length > nextLineIndent) {
+                    editBuilder.insert(new Position(range.start.line + 1, 0), insertString);
                 }
             });
         }
