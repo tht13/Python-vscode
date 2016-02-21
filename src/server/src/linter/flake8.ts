@@ -60,7 +60,7 @@ export class Flake8 extends BaseLinter {
             
         // implement multiLine messages
         // ie lineStart and lineEnd
-        let lineNumber = matchProperties.line;
+        let lineNumber = matchProperties.line - 1;
         let colStart = matchProperties.column;
         let colEnd = this._documentText[lineNumber].length;
         let documentLine: string = this._documentText[lineNumber];
