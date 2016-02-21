@@ -4,7 +4,8 @@ import * as path from 'path';
 
 import { languages, workspace, Uri, ExtensionContext, IndentAction, Diagnostic,
 DiagnosticCollection, Range, Disposable, TextDocument, window,
-WorkspaceConfiguration, TextDocumentChangeEvent, Position } from 'vscode';
+WorkspaceConfiguration, TextDocumentChangeEvent, Position,
+TextLine } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions,
 TransportKind } from 'vscode-languageclient';
 import { Request, RequestParams, RequestResult, RequestError, RequestEventType } from './request';
@@ -91,6 +92,12 @@ class PythonExtension {
         }
         this._doRequest(params, cb);
     }
+    
+    private _isControlStatement(line: TextLine): boolean {
+        let text = line.text.substring(line.firstNonWhitespaceCharacterIndex);
+        let controlStatementRegExp = new RegExp("^(?:def|class|for|if|elif|else|while).*?:\s*$", "gm");
+        return text.search(controlStatementRegExp) !== -1;
+    }
 
     private _onChange(e: TextDocumentChangeEvent): void {
         let doc = e.document;
@@ -105,7 +112,7 @@ class PythonExtension {
         if (range.end.line + 2 == doc.lineCount) return;
         let changeLine = doc.lineAt(range.start.line);
         // if the new Line occured after a ':' then add indentation
-        if (changeLine.text.search(/:[\s]*$/) !== -1) {
+        if (this._isControlStatement(changeLine)) {
             if (window.activeTextEditor.document.version !==
                 doc.version) {
                 return;
