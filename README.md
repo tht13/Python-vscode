@@ -27,6 +27,12 @@ Linting can be customised with a `.pylintrc`(pyLint) or `setup.cfg`(flake8) file
 
 ## Change log
 
+### v0.2.3
+* Bug fixes and stability improvements
+
+### v0.2.2
+* Fixed "crazy" auto indentation bug
+
 ### v0.2.0
 * Added compatability for different linters
 * Added auto indenting inside if/else/for statements
