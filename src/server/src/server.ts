@@ -67,7 +67,7 @@ connection.onInitialize((params): InitializeResult => {
     // connection.console.log(params.initializationOptions);
     workspaceRoot = params.rootPath;
     linter = loadLinter(linterType);
-    linter.enableConsole(connection.console);
+    // linter.enableConsole(connection.console);
     return {
         capabilities: {
             // Tell the client that the server works in FULL text document sync mode
@@ -93,9 +93,9 @@ function loadSettings(pythonSettings: any): void {
     maxNumberOfProblems = pythonSettings.maxNumberOfProblems || 100;
     linterType = getLinterType(pythonSettings.linter || DEFAULT_LINTER);
     linter = loadLinter(linterType);
-    connection.console.log("setings");
-    connection.console.log(maxNumberOfProblems.toString());
-    connection.console.log(pythonSettings.linter);
+    // connection.console.log("setings");
+    // connection.console.log(maxNumberOfProblems.toString());
+    // connection.console.log(pythonSettings.linter);
 }
 
 /**
@@ -103,8 +103,8 @@ function loadSettings(pythonSettings: any): void {
  * Returns the status of the handle attempt
  */
 connection.onRequest(Request.type, (params: RequestParams): RequestResult => {
-    connection.console.log("REQUEST");
-    connection.console.log("REQUEST EVENT TYPE: " + params.requestEventType);
+    // connection.console.log("REQUEST");
+    // connection.console.log("REQUEST EVENT TYPE: " + params.requestEventType);
     let result: RequestResult;
     switch (params.requestEventType) {
         case RequestEventType.OPEN:
