@@ -64,6 +64,7 @@ let linter: BaseLinter;
 // in the passed params the rootPath of the workspace plus the client capabilites. 
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
+    // connection.console.log(params.initializationOptions);
     workspaceRoot = params.rootPath;
     linter = loadLinter(linterType);
     linter.enableConsole(connection.console);

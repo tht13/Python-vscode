@@ -52,6 +52,9 @@ class PythonExtension {
                 configurationSection: 'python',
                 // Notify the server about file changes to '.pylintrc files contain in the workspace
                 fileEvents: workspace.createFileSystemWatcher('**/.pylintrc')
+            },
+            initializationOptions: {
+                debug: true
             }
         }
 
