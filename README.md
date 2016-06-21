@@ -10,7 +10,7 @@ Linting can be customised with a `.pylintrc`(pyLint) or `setup.cfg`(flake8) file
 ## Requirements
 * Python (2 or 3)
   * To instruct on Python 2 or 3 the shebang must be present at the top of the python file  
-    `!#/usr/bin/python2` or `!#/usr/bin/python3`  
+    `#!/usr/bin/python2` or `#!/usr/bin/python3`  
     Not specifying 2 or 3 will default to 2.
 * One of these two linters
   * Pylint
