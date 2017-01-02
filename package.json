@@ -19,10 +19,15 @@
   "scripts": {
     "postinstall": "node ./node_modules/vscode/bin/install",
     "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
-    "compile": "installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && tsc -p ./",
-    "build": "tsc -p ./"
+    "precompile": "precompile",
+    "compile": "node_modules/.bin/installServerIntoExtension ./out ./src/server/package.json ./src/server/tsconfig.json && tsc -p ./",
+    "build": "tsc -p ./",
+    "preversion": "npm run compile",
+    "version": "changes",
+    "postversion": "git push --follow-tags"
   },
   "devDependencies": {
+    "@studio/changes": "^1.0.5",
     "@types/mocha": "^2.2.35",
     "@types/node": "^6.0.54",
     "typescript": "2.1.4",
