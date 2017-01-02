@@ -1,5 +1,9 @@
 # Changes
 
+## 0.3.1
+
+- update travis file (Thomas Townsend)
+
 ## 0.3.0
 
 - install changes and update build scripts (Thomas Townsend)
