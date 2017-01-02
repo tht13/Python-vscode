@@ -3,7 +3,7 @@
 import {
 IPCMessageReader, IPCMessageWriter,
 createConnection, IConnection, TextDocumentSyncKind,
-TextDocuments, ITextDocument, Diagnostic, DiagnosticSeverity,
+TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
 InitializeParams, InitializeResult, TextDocumentIdentifier,
 CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
@@ -134,7 +134,7 @@ connection.onRequest(Request.type, (params: RequestParams): RequestResult => {
  * Takes a text document and runs PyLint on it, sends Diagnostics back to client
  * @param  {ITextDocument} textDocument
  */
-function validateTextDocument(textDocument: ITextDocument): void {
+function validateTextDocument(textDocument: TextDocument): void {
     linter.setDocument(textDocument);
     let cmd: string = linter.getCmd();
 

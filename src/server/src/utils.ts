@@ -28,7 +28,7 @@ export function validatePath(path: string): boolean {
         if (path === "" || path === null || path === undefined) {
             return false;
         }
-        fs.accessSync(path, fs.F_OK);
+        fs.accessSync(path, fs.constants.F_OK);
         return true;
     } catch(e) {
         return false;

@@ -1,7 +1,7 @@
 "use strict";
 import { RemoteConsole, Diagnostic, 
     DiagnosticSeverity, Range, 
-    ITextDocument } from 'vscode-languageserver';
+    TextDocument } from 'vscode-languageserver';
 import { fixPath, validatePath } from './../utils';
 
 //TODO: Handle false return from validatePath better
@@ -81,7 +81,7 @@ export class BaseLinter {
         }
     }
 
-    setDocument(doc: ITextDocument) {
+    setDocument(doc: TextDocument) {
         let path = fixPath(doc.uri);
         if (validatePath(path)) {
             this._filepath = path;
