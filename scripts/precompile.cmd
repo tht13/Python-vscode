@@ -1,0 +1,1 @@
+@IF not exist ".\out" mkdir .\out

@@ -1,18 +1,38 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
 'use strict';
 
 import {
 IPCMessageReader, IPCMessageWriter,
 createConnection, IConnection, TextDocumentSyncKind,
-TextDocuments, ITextDocument, Diagnostic, DiagnosticSeverity,
+TextDocuments, TextDocument, Diagnostic, DiagnosticSeverity,
 InitializeParams, InitializeResult, TextDocumentIdentifier,
 CompletionItem, CompletionItemKind
 } from 'vscode-languageserver';
 import { exec } from 'child_process';
 import 'process';
+import { Request, RequestResult, RequestEventType, RequestParams } from '../../client/src/request';
+import { BaseLinter } from './linter/baseLinter';
+import { PyLinter } from './linter/pyLint';
+import { Flake8 } from './linter/flake8';
+import { fixPath } from './utils';
+
+enum LinterType {
+    FLAKE8,
+    PYLINTER
+}
+
+// The settings interface describe the server relevant settings part
+interface Settings {
+    python: PythonSettings;
+}
+
+// These are the python settings we defined in the client's package.json
+// file
+interface PythonSettings {
+    maxNumberOfProblems: number;
+    linter: LinterType
+}
+
+const DEFAULT_LINTER = "pyLint";
 
 // Create a connection for the server. The connection uses 
 // stdin / stdout for message passing
@@ -25,11 +45,29 @@ let documents: TextDocuments = new TextDocuments();
 // for open, change and close text document events
 documents.listen(connection);
 
+// hold the maxNumberOfProblems setting
+let maxNumberOfProblems: number;
+
+
+let linterMap: Map<string, LinterType> = new Map();
+linterMap.set(DEFAULT_LINTER, LinterType.PYLINTER);
+linterMap.set("pyLint", LinterType.PYLINTER);
+linterMap.set("flake8", LinterType.FLAKE8);
+
+// hold linter type
+let linterType: LinterType = getLinterType(DEFAULT_LINTER);
+
+// Linter
+let linter: BaseLinter;
+
 // After the server has started the client sends an initilize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilites. 
 let workspaceRoot: string;
 connection.onInitialize((params): InitializeResult => {
+    // connection.console.log(params.initializationOptions);
     workspaceRoot = params.rootPath;
+    linter = loadLinter(linterType);
+    // linter.enableConsole(connection.console);
     return {
         capabilities: {
             // Tell the client that the server works in FULL text document sync mode
@@ -42,134 +80,85 @@ connection.onInitialize((params): InitializeResult => {
     }
 });
 
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
-    validateTextDocument(change.document);
-});
-
-// The settings interface describe the server relevant settings part
-interface Settings {
-    python: PythonSettings;
-}
-
-// These are the python settings we defined in the client's package.json
-// file
-interface PythonSettings {
-    maxNumberOfProblems: number;
-}
-
-// hold the maxNumberOfProblems setting
-let maxNumberOfProblems: number;
 // The settings have changed. Is send on server activation
 // as well.
 connection.onDidChangeConfiguration((change) => {
     let settings = <Settings>change.settings;
-    maxNumberOfProblems = settings.python.maxNumberOfProblems || 100;
+    loadSettings(settings.python);
     // Revalidate any open text documents
     documents.all().forEach(validateTextDocument);
 });
 
-function validateTextDocument(textDocument: ITextDocument): void {
-    let path: string = textDocument.uri;
-    // disabled to improve performence, can be enabled if features require
-    let documentLines: string[] = textDocument.getText().split(/\r?\n/g);
-    if (/^win/.test(process.platform)) {
-        path = path.replace('file:///', '').replace('%3A', ':').replace('/', '\\');
-    } else {
-        path = path.replace('file://', '');
+function loadSettings(pythonSettings: any): void {
+    maxNumberOfProblems = pythonSettings.maxNumberOfProblems || 100;
+    linterType = getLinterType(pythonSettings.linter || DEFAULT_LINTER);
+    linter = loadLinter(linterType);
+    // connection.console.log("setings");
+    // connection.console.log(maxNumberOfProblems.toString());
+    // connection.console.log(pythonSettings.linter);
+}
+
+/**
+ * Handles requests from the client
+ * Returns the status of the handle attempt
+ */
+connection.onRequest(Request.type, (params: RequestParams): RequestResult => {
+    // connection.console.log("REQUEST");
+    // connection.console.log("REQUEST EVENT TYPE: " + params.requestEventType);
+    let result: RequestResult;
+    switch (params.requestEventType) {
+        case RequestEventType.OPEN:
+        case RequestEventType.SAVE:
+            try {
+                validateTextDocument(documents.get(params.uri.toString()));
+                result = {
+                    succesful: true
+                };
+            } catch (exception) {
+                result = {
+                    succesful: false,
+                    message: exception.toString()
+                };
+            }
+            break;
+        case RequestEventType.CONFIG:
+            loadSettings(params.configuration);
+            break;
     }
-    connection.console.log(textDocument.uri);
-    connection.console.log(path);
-    var cmd: string = "pylint -r n "+path;
+    return result;
+});
+
+
+
+/**
+ * Takes a text document and runs PyLint on it, sends Diagnostics back to client
+ * @param  {ITextDocument} textDocument
+ */
+function validateTextDocument(textDocument: TextDocument): void {
+    linter.setDocument(textDocument);
+    let cmd: string = linter.getCmd();
 
     exec(cmd, function(error: Error, stdout: ArrayBuffer, stderr: ArrayBuffer) {
         if (error.toString().length !== 0) {
-            connection.console.warn(`[ERROR] File: ${ path } - Error message: ${ error.toString() }`);
-            connection.console.warn(`[ERROR] Error output: ${ stderr.toString() }`);
+            connection.console.warn(`[ERROR] File: ${linter.getFilepath()} - Error message: ${error.toString()}`);
+            connection.console.warn(`[ERROR] Error output: ${stderr.toString()}`);
         }
-        
+
         let results: string[] = stdout.toString().split(/\r?\n/g);
-        // remove lines up to first error message
-        for (let i = 0; !results[i++].startsWith('***'); results.shift());
-        results.shift();
+        results = linter.fixResults(results);
         
-        // log error messages
+        // process linter output
         let diagnostics: Diagnostic[] = [];
         for (let result of results) {
-            let match: string[] = result.match(/(\w):([\s\d]{3,}),([\s\d]{2,}): (.+?) \((.*)\)/);
-            if (match == null) {
-                connection.console.warn("unparsed line:");
-                connection.console.warn(result);
-                continue;
+            if (diagnostics.length >= maxNumberOfProblems) {
+                break;
+            } 
+            let diagnostic = linter.parseLintResult(result);
+            if (diagnostic != null) {
+                diagnostics.push(diagnostic);
             }
-            let severity = 0;
-            switch (match[1]) {
-                case 'E':
-                    // [E]rror for important programming issues (i.e. most probably bug)
-                    severity = DiagnosticSeverity.Error;
-                    break;
-                case 'F':
-                    // [F]atal for errors which prevented further processing
-                    severity = DiagnosticSeverity.Error;
-                    break;
-                case 'W':
-                    // [W]arning for stylistic problems, or minor programming issues
-                    severity = DiagnosticSeverity.Warning;
-                    break;
-                case 'C':
-                    // [C]onvention for coding standard violation
-                    severity = DiagnosticSeverity.Information;
-                    break;
-                case 'R':
-                    // [R]efactor for a “good practice” metric violation
-                    severity = DiagnosticSeverity.Information;
-                    break;
-                default:
-                    severity = DiagnosticSeverity.Error;
-                    break;
-            }
-            let quote: string = null;
-            // check for variable name or line in message
-            if (match[4].indexOf('"') !== -1) {
-                quote = match[4].match(/\\?"(.*?)\\?"/)[1];
-            } else if (match[4].indexOf("'") !== -1) {
-                quote = match[4].match(/'(.*)'/)[1];
-            }
-            
-            // implement multiLine messages
-            // ie lineStart and lineEnd
-            let line = parseInt(match[2])-1;
-            let colStart = parseInt(match[3]);
-            let colEnd = documentLines[line].length;
-            let documentLine: string = documentLines[line];
-            if (quote !== null) {
-                // subtract two because match includes the two quotes
-                let quoteStart: number = documentLine.indexOf(quote);
-                if (quoteStart === -1) {
-                    connection.console.warn("Colstart could not be identified.")
-                } else {
-                    colStart = quoteStart;
-                    colEnd = colStart+quote.length;
-                }
-            }
-            // make sure colStart does not including leading whitespace
-            if (colStart == 0 && documentLine.substr(0, 1).match(/\s/) !== null) {
-                colStart = documentLine.length - documentLine.replace(/^\s*/g, "").length;
-            }
-            
-            diagnostics.push({
-                severity: severity,
-                range: {
-                    start: { line: line, character: colStart },
-                    end: { line: line, character: colEnd }
-                },
-                message: match[4]+': '+match[5]
-            });
-            connection.console.log(`${JSON.stringify(match) }`);
         }
-        connection.console.log(`File: ${ path } - Errors Found: ${ diagnostics.length.toString() }`)
-        // connection.console.log(`Problems: ${problems}: ${JSON.stringify(diagnostics) }`);
+        connection.console.log(`File: ${linter.getFilepath()} - Errors Found: ${diagnostics.length.toString()}`);
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
     });
 }
@@ -177,7 +166,26 @@ function validateTextDocument(textDocument: ITextDocument): void {
 connection.onDidChangeWatchedFiles((change) => {
     // Monitored files have change in VSCode
     connection.console.log('We recevied an file change event');
+    documents.all().forEach(validateTextDocument);
 });
+
+function loadLinter(type: LinterType): BaseLinter {
+    switch (type) {
+        case LinterType.FLAKE8:
+            return new Flake8();
+        case LinterType.PYLINTER:
+            return new PyLinter();
+        default:
+            return new PyLinter();
+    }
+}
+
+function getLinterType(linter: string): LinterType {
+    if (linterMap.has(linter)) {
+        return linterMap.get(linter);
+    }
+    return linterMap.get(DEFAULT_LINTER);
+}
 
 
 // This handler provides the initial list of the completion items.
