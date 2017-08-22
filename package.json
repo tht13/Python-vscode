@@ -67,17 +67,6 @@
                 "configuration": "./python.configuration.json"
             }
         ],
-        "grammars": [
-            {
-                "language": "python",
-                "scopeName": "source.python",
-                "path": "./syntaxes/python.tmLanguage"
-            },
-            {
-                "scopeName": "source.regexp.python",
-                "path": "./syntaxes/Regular Expressions (Python).tmLanguage"
-            }
-        ],
         "snippets": [
             {
                 "language": "python",

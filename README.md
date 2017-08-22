@@ -2,7 +2,7 @@
 
 A Python language pack for Visual Studio Code
 
-Supports syntax highlighting, snippets and linting (see requirements below).
+Supports snippets and linting (see requirements below).
 Linting can be customised with a `.pylintrc` file in the root of the current working directory 
 
 ## Requirements
@@ -20,4 +20,3 @@ Linting can be customised with a `.pylintrc` file in the root of the current wor
 * [ ] Intellisense
 * [ ] Formatting
 * [x] Snippets
-* [x] Syntax Highlighting
