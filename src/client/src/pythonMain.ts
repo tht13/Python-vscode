@@ -100,6 +100,9 @@ class PythonExtension {
     }
 
     private _onChange(e: TextDocumentChangeEvent): void {
+        if (e.contentChanges.length < 1)
+            return;
+        
         let doc = e.document;
         let changes = e.contentChanges[0];
         if (doc.languageId !== 'python' ||
